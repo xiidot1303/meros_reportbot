@@ -21,3 +21,8 @@ DB_PASSWORD = os.environ.get("DB_PASSWORD")
 BOT_API_TOKEN = os.environ.get("BOT_API_TOKEN")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 WEBAPP_URL = os.environ.get("WEBAPP_URL")
+
+# SMART UP
+SMARTUP_API_URL = os.environ.get("SMARTUP_API_URL")
+SMARTUP_USERNAME = os.environ.get("SMARTUP_USERNAME")
+SMARTUP_PASSWORD = os.environ.get("SMARTUP_PASSWORD")

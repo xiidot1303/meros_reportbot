@@ -20,12 +20,21 @@ async def is_message_back(update: Update):
 
 
 async def main_menu(update: Update, context: CustomContext):
-    update = update.callback_query if update.callback_query else update
     bot = context.bot
 
+    inline_keyboards = [
+        [InlineKeyboardButton(text=context.words.reconciliation_act, callback_data="reconciliation_act")]
+    ]
+    if update.callback_query:
+        await update.callback_query.edit_message_text(
+            context.words.main_menu,
+            reply_markup=InlineKeyboardMarkup(inline_keyboards),
+        )
+        return
     await bot.send_message(
         update.message.chat_id,
         context.words.main_menu,
+        reply_markup=InlineKeyboardMarkup(inline_keyboards),
     )
 
-    await check_username(update)
+    return ConversationHandler.END

@@ -55,3 +55,14 @@ async def build_keyboard(context: CustomContext, button_list, n_cols, back_butto
 
     reply_markup = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
     return reply_markup
+
+
+
+async def main_menu_keyboard(context: CustomContext):
+    buttons = [
+        [
+            InlineKeyboardButton(text=context.words.main_menu, callback_data="main_menu"),
+        ],
+    ]
+    reply_markup = InlineKeyboardMarkup(buttons)
+    return reply_markup

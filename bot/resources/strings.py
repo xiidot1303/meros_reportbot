@@ -70,24 +70,61 @@ class Strings:
         """Ваше имя успешно изменено!""",
     ]
 
-    _ = [
-        "",
-        ""
+    successfully_registered = [
+        "Siz muvaffaqiyatli ro'yxatdan o'tdingiz! ✅",
+        "Вы успешно зарегистрированы! ✅",
     ]
 
-    _ = [
-        "",
-        ""
+    you_are_not_registered = [
+        "Siz bizning mijozlar ro'yxatimizda yo'qsiz. Iltimos, administrator bilan bog'laning.",
+        "Вы не в нашем списке клиентов. Пожалуйста, свяжитесь с администратором.",
     ]
 
-    _ = [
-        "",
-        ""
+    reconciliation_act = [
+        "📑 Akt sverka",
+        "📑 Акт сверки"
     ]
 
-    _ = [
-        "",
-        ""
+    incorrect_date_format = [
+        "Kiritilgan sana noto'g'ri formatda. Iltimos, sanani quyidagi formatda kiriting: DD.MM.YYYY",
+        "Введенная дата имеет неверный формат. Пожалуйста, введите дату в следующем формате: ДД.ММ.ГГГГ",
+    ]
+
+    enter_start_date = [
+        "Akt sverka uchun boshlang'ich sanani kiriting (DD.MM.YYYY)",
+        "Введите начальную дату для акта сверки (ДД.ММ.ГГГГ)",
+    
+    ]
+
+    enter_end_date = [
+        "Akt sverka uchun tugash sanasini kiriting (DD.MM.YYYY)",
+        "Введите конечную дату для акта сверки (ДД.ММ.ГГГГ)",
+    ]
+
+    order_info = [
+"""
+Yetkazib berish sanasi: <co>{delivery_date}</code>
+Menejer: <co>{manager}</code>
+Miqdor: <code>{total_amount}</code> UZS
+STIR: <code>{tin}</code>
+"""
+,
+"""
+Дата доставки: <code>{delivery_date}</code>
+Менеджер: <co>{manager}</code>
+Сумма: <code>{total_amount}</code> UZS
+ИНН: <co>{tin}</code>
+"""
+    ]
+
+    new_order = [
+        "🆕 <b>YANGI SAVDO!</b>",
+        "🆕 <b>НОВАЯ ПРОДАЖА!</b>"
+    ]
+
+    order_status_changed_to = [
+        "BUYURTMA HOLATI O'ZGARDI: ",
+        "СТАТУС ЗАКАЗА ИЗМЕНИЛСЯ НА: "
     ]
 
     _ = [

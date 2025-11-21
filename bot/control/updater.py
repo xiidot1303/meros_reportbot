@@ -14,12 +14,13 @@ from config import BOT_API_TOKEN, WEBHOOK_URL
 from bot.control.handlers import handlers
 from bot.bot.main import error_handler
 from bot import *
+from python_telegram_bot_django_persistence.persistence import DjangoPersistence
 
 
 persistence = PicklePersistence(filepath="persistencebot")
 context_types = ContextTypes(context=CustomContext)
 application = Application.builder().token(
-    BOT_API_TOKEN).context_types(context_types).build()
+    BOT_API_TOKEN).context_types(context_types).persistence(DjangoPersistence()).build()
 
 # add handlers
 for handler in handlers[::-1]:

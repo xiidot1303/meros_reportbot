@@ -1,4 +1,4 @@
-n = 8
+n = 10
 (
     SELECT_LANG,
     GET_NAME,
@@ -8,4 +8,6 @@ n = 8
     LANG_SETTINGS,
     NAME_SETTINGS,
     PHONE_SETTINGS,
+    GET_RECONCILIATION_START_DATE,
+    GET_RECONCILIATION_END_DATE,
 ) = range(0, n)

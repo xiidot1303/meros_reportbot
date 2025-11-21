@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'python_telegram_bot_django_persistence',
 ]
 
 MIDDLEWARE = [

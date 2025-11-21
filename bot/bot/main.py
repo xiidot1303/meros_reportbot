@@ -4,14 +4,42 @@ import logging
 import traceback
 import html
 from django.db import close_old_connections
+from app.models import Client
 
 
 async def start(update: Update, context: CustomContext):
-    text = context.words.main_menu
-    await context.bot.send_message(update.message.chat_id, text)
-    await context.application.update_queue.put(NewsletterUpdate(
-        user_id=context._user_id, text="lalalalalalalal"
-    ))
+    if await is_group(update):
+        return
+
+    
+    if await is_registered(update.message.chat.id):
+        # some functions
+        await main_menu(update, context)
+    else:
+        hello_text = Strings.hello
+        await update.message.reply_text(
+            hello_text,
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[["UZ 🇺🇿", "RU 🇷🇺"]], resize_keyboard=True, one_time_keyboard=True
+            ),
+        )
+        return SELECT_LANG
+
+
+async def reconciliation_act(update: Update, context: CustomContext):
+    text = context.words.enter_start_date
+    await update.callback_query.edit_message_text(text, reply_markup = await main_menu_keyboard(context))
+    return GET_RECONCILIATION_START_DATE
+
+
+
+
+
+
+
+
+
+
 
 
 async def newsletter_update(update: NewsletterUpdate, context: CustomContext):
