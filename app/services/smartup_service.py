@@ -72,6 +72,7 @@ class SmartUpApiClient:
             auth=(self.username, self.password)
         )
         # download file from response
+        os.makedirs("files/reconciliation_acts", exist_ok=True)
         file_path = f"files/reconciliation_acts/reconciliation_act_{client_id}_{datetime.now().timestamp()}.xlsx"
         with open(f"{file_path}", "wb") as f:
             f.write(response.content)
