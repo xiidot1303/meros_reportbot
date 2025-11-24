@@ -1,5 +1,9 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
+from asgiref.sync import sync_to_async
+from app.models import Client
+from django.db.models import Q
+
 
 class Bot_user(models.Model):
     user_id = models.BigIntegerField(null=True)
@@ -23,7 +27,36 @@ class Bot_user(models.Model):
     class Meta:
         verbose_name = "Пользователь бота"
         verbose_name_plural = "Пользователи бота"
+
+    async def get_active_cabinet(self):
+        return await Cabinet.objects.aget(bot_user=self, is_active=True)
     
+
+class Cabinet(models.Model):
+    bot_user = models.ForeignKey('Bot_user', null=True, blank=True, on_delete=models.CASCADE, verbose_name='Пользователь бота')
+    client = models.ForeignKey('app.Client', null=True, blank=True, on_delete=models.CASCADE, verbose_name='Клиент')
+    date = models.DateTimeField(db_index=True, null=True, auto_now_add=True, blank=True, verbose_name='Дата входа')
+    is_active = models.BooleanField(default=True, verbose_name='Активен')
+
+    class Meta:
+        verbose_name = "Кабинет"
+        verbose_name_plural = "Кабинеты"
+        constraints = [
+            models.UniqueConstraint(fields=['is_active'], condition=Q(is_active=True), name='unique_active_cabinet')
+        ]
+
+    def __str__(self) -> str:
+        try:
+            return f"{self.client.name}"
+        except:
+            return super().__str__()
+    
+    @property
+    @sync_to_async
+    def get_client(self) -> Client:
+        return self.client
+
+
 class Message(models.Model):
     bot_users = models.ManyToManyField('bot.Bot_user', blank=True, related_name='bot_users_list', verbose_name='Пользователи бота')
     text = models.TextField(null=True, blank=False, max_length=1024, verbose_name='Текст')

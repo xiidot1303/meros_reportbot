@@ -127,6 +127,53 @@ STIR: <code>{tin}</code>
         "СТАТУС ЗАКАЗА ИЗМЕНИЛСЯ НА: "
     ]
 
+    send_phone_number = [
+        "🧐 Ushbu telefon raqam orqali hech qanday ma'lumot topilmadi. Ro'yxatdan o'tgan telefon raqamni yozib qoldiring" \
+            "\n\n<i>991234567 formatida</i>",
+        "🧐 По этому номеру телефона не найдено никакой информации. Пожалуйста, оставьте зарегистрированный номер телефона" \
+            "\n\n<i>в формате 991234567</i>",
+    ]
+
+    please_select_your_branch = [
+        "Iltimos, fillialingizni tanlang:",
+        "Пожалуйста, выберите ваш филиал:"
+    ]
+
+    please_send_your_contact_via_button = [
+        "Iltimos, pastdagi tugma orqali kontaktni yuboring 👇",
+        "Пожалуйста, отправьте контакт с помощью кнопки ниже 👇"
+    ]
+
+    switch_cabinet = [
+        "🔄 Kabinetni almashtirish",
+        "🔄 Смена кабинета"
+    ]
+
+    select_cabinet = [
+        "Iltimos, kabinetni tanlang:",
+        "Пожалуйста, выберите кабинет:"
+    ]
+
+    add_cabinet = [
+        "➕ Yangi kabinet qo'shish",
+        "➕ Добавить новый кабинет"
+    ]
+
+    cabinet_switched = [
+        "Siz muvaffaqiyatli ravishda {client_name} kabinetiga o'tdingiz! ✅",
+        "Вы успешно переключились на кабинет {client_name}! ✅"
+    ]
+
+    _ = [
+        "",
+        ""
+    ]
+
+    _ = [
+        "",
+        ""
+    ]
+
     _ = [
         "",
         ""

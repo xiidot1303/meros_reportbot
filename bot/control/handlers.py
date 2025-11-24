@@ -12,7 +12,7 @@ from telegram.ext import (
 from bot.resources.conversationList import *
 
 from bot.bot import (
-    main, login, reconciliation_act
+    main, login, reconciliation_act, cabinet
 )
 
 exceptions_for_filter_text = (~filters.COMMAND) & (
@@ -24,11 +24,42 @@ login_handler = ConversationHandler(
     ],
     states={
         SELECT_LANG: [
-            MessageHandler(filters.Text("UZ 🇺🇿") |
-                           filters.Text("RU 🇷🇺"), login.get_lang)
+            CallbackQueryHandler(login.get_lang, pattern="^(uz|ru)$")
         ],
+        GET_CONTACT_VIA_BUTTON: [
+            MessageHandler(
+                filters.CONTACT,
+                login.get_contact_via_button
+            ),
+            CallbackQueryHandler(
+                main.main_menu,
+                pattern="^back$"
+            )
+        ],
+        GET_PHONE_NUMBER: [
+            MessageHandler(
+                exceptions_for_filter_text & filters.TEXT,
+                login.get_phone_number
+            ),
+            CallbackQueryHandler(
+                login._to_the_getting_contact_via_button,
+                pattern="^back$"
+            )
+        ],
+        GET_BRANCH: [
+            CallbackQueryHandler(
+                login.get_branch,
+                pattern="^\d+$"
+            )
+        ]
     },
-    fallbacks=[],
+    fallbacks=[
+        CallbackQueryHandler(
+            callback=main.main_menu,
+            pattern="^main_menu$",
+        ),
+        CommandHandler('start', main.main_menu)
+    ],
     allow_reentry=True,
     persistent=True,
     name="login_handler",
@@ -70,9 +101,38 @@ reconciliation_act_handler = ConversationHandler(
 )
 
 
+cabinet_handler = ConversationHandler(
+    entry_points=[
+        CallbackQueryHandler(
+            callback=main.switch_cabinet,
+            pattern="switch_cabinet",
+        )
+    ],
+    states={
+        SELECT_CABINET: [
+            CallbackQueryHandler(
+                cabinet.get_cabinet,
+                pattern="^switch_to-\d+$"
+            )
+        ]
+    },
+    fallbacks=[
+        CallbackQueryHandler(
+            callback=main.main_menu,
+            pattern="^main_menu$",
+        ),
+        CommandHandler('start', main.main_menu)
+    ],
+    allow_reentry=True,
+    persistent=True,
+    name="cabinet_handler",
+)
+
+
 handlers = [
     login_handler,
     reconciliation_act_handler,
+    cabinet_handler,
 
 
     TypeHandler(type=NewsletterUpdate, callback=main.newsletter_update)

@@ -20,6 +20,13 @@ class Bot_userAdmin(admin.ModelAdmin):
     edit_button.short_description = 'Действие'
 
 
+class CabinetAdmin(admin.ModelAdmin):
+    list_display = ['bot_user', 'client', 'is_active', 'date']
+    list_filter = ['is_active', 'date']
+    search_fields = ['bot_user__name', 'client__name']
+    list_display_links = None
+
+
 class MesageAdmin(admin.ModelAdmin):
     list_display = ['bot_users_name', 'small_text', 'open_photo', 'open_video', 'open_file', 'date']
     list_display_links = None
@@ -74,3 +81,4 @@ class MesageAdmin(admin.ModelAdmin):
 
 admin.site.register(Bot_user, Bot_userAdmin)
 admin.site.register(Message, MesageAdmin)
+admin.site.register(Cabinet, CabinetAdmin)

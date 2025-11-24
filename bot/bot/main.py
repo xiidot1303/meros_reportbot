@@ -5,39 +5,48 @@ import traceback
 import html
 from django.db import close_old_connections
 from app.models import Client
+from bot.bot.cabinet import _to_the_selecting_cabinet
 
 
 async def start(update: Update, context: CustomContext):
     if await is_group(update):
         return
 
-    
     if await is_registered(update.message.chat.id):
         # some functions
         await main_menu(update, context)
     else:
         hello_text = Strings.hello
+        reply_markup = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text="UZ 🇺🇿",
+                        callback_data="uz"
+                    ),
+                    InlineKeyboardButton(
+                        text="RU 🇷🇺",
+                        callback_data="ru"
+                    )
+
+                ]
+            ]
+        )
         await update.message.reply_text(
             hello_text,
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard=[["UZ 🇺🇿", "RU 🇷🇺"]], resize_keyboard=True, one_time_keyboard=True
-            ),
+            reply_markup=reply_markup,
         )
         return SELECT_LANG
 
 
 async def reconciliation_act(update: Update, context: CustomContext):
     text = context.words.enter_start_date
-    await update.callback_query.edit_message_text(text, reply_markup = await main_menu_keyboard(context))
+    await update.callback_query.edit_message_text(text, reply_markup=await main_menu_keyboard(context))
     return GET_RECONCILIATION_START_DATE
 
 
-
-
-
-
-
-
+async def switch_cabinet(update: Update, context: CustomContext):
+    return await _to_the_selecting_cabinet(update, context)
 
 
 
@@ -95,7 +104,6 @@ async def error_handler(update: Update, context: CustomContext):
     if "connection already closed" in str(context.error):
         await sync_to_async(close_old_connections)()
         return
-
 
     """Log the error and send a telegram message to notify the developer."""
     # Log the error before we do anything else, so we can see it even if something breaks.

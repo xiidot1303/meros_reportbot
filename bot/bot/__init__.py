@@ -23,7 +23,8 @@ async def main_menu(update: Update, context: CustomContext):
     bot = context.bot
 
     inline_keyboards = [
-        [InlineKeyboardButton(text=context.words.reconciliation_act, callback_data="reconciliation_act")]
+        [InlineKeyboardButton(text=context.words.reconciliation_act, callback_data="reconciliation_act")],
+        [InlineKeyboardButton(text=context.words.switch_cabinet, callback_data="switch_cabinet")],
     ]
     if update.callback_query:
         await update.callback_query.edit_message_text(
