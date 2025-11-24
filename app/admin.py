@@ -3,5 +3,5 @@ from app.models import *
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = ('name', 'external_id', 'tg_id')
-    search_fields = ('name', 'external_id', 'tg_id')
+    list_display = ('name', 'phone', 'external_id', 'tg_id')
+    search_fields = ('name', 'phone', 'external_id', 'tg_id')

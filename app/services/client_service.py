@@ -17,23 +17,45 @@ def update_clients_by_data(data):
     to_create = []
     to_update = []
 
-    for name, external_id in raw_items:
+    for name, external_id, phone in raw_items:
+        if phone:
+            # Normalize phone number
+            phone = phone.strip()
+            phone = phone.replace(" ", "").replace("-", "").replace(
+                "(", "").replace(")", "").replace(".", "").replace(",", "").replace(
+                    ":", "")
+            if "+998998" in phone and len(phone) == 16:
+                phone = phone.replace("+998998", "+998")
+            phone = phone.replace("+", "")
+            if len(phone) == 9:
+                phone = "998" + phone
+            phone = phone[:12]
+            if phone.isdigit():
+                phone = "+" + phone
+            else:
+                phone = None
+                
         if external_id in existing_map:
             # Update existing object
             client = existing_map[external_id]
-            if client.name != name:   # Update only if changed
+            if client.name != name or client.phone != phone:   # Update only if changed
                 client.name = name
+                client.phone = phone
                 to_update.append(client)
         else:
             # Prepare new object
             to_create.append(
-                Client(external_id=external_id, name=name)
+                Client(external_id=external_id, name=name, phone=phone)
             )
 
     # Step 3 — Perform bulk operations
     with transaction.atomic():
         if to_create:
-            Client.objects.bulk_create(to_create, ignore_conflicts=True)
+            # deal by 500 to avoid too large queries
+            for i in range(0, len(to_create), 500):
+                Client.objects.bulk_create(to_create[i:i+500], ignore_conflicts=True)
 
         if to_update:
-            Client.objects.bulk_update(to_update, ["name"])
+            # Update existing clients by 500 to avoid too large queries
+            for i in range(0, len(to_update), 500):
+                Client.objects.bulk_update(to_update[i:i+500], ["name", "phone"])

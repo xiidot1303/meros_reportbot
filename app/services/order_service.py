@@ -33,3 +33,15 @@ def handle_orders_change(orders_list: list):
         if created:
             # notify about new order
             order_status_change_notify(order_obj)
+        else:
+            # check for status change
+            if order_obj.status != status:
+                order_obj.status = status
+                order_obj.save()
+                # notify about status change
+                order_status_change_notify(order_obj)
+         
+            # check order price change
+            if order_obj.total_amount != total_amount:
+                order_obj.total_amount = total_amount
+                order_obj.save()

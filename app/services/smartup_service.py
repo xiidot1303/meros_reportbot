@@ -3,7 +3,7 @@ from config import SMARTUP_API_URL, SMARTUP_PASSWORD, SMARTUP_USERNAME
 
 
 class ApiMethods:
-    clients_list = "b/anor/mrf/client_list:table"
+    clients_list = "b/anor/mr/person/legal_person_list:table"
     reconciliation_act_report = "b/anor/rep/mkr/reconciliation_acts:run"
     orders_list = "b/trade/tdeal/order/order_list:table"
 
@@ -15,29 +15,41 @@ class SmartUpApiClient:
         self.password = SMARTUP_PASSWORD
 
     def get_clients(self):
-        data = {
-            "p": {
-                "column": [
-                    "name",
-                    "client_id"
-                ],
-                "filter": [
-                    "state",
-                    "=",
-                    "A"
-                ],
-                # "sort": [],
-                # "offset": 0
-                # "limit": 50
+        result = []
+        offset = 0
+        while True:
+            data = {
+                "p": {
+                    "column": [
+                        "name",
+                        "person_id",
+                        "main_phone"
+                    ],
+                    "filter": [
+                        "state",
+                        "=",
+                        "A"
+                    ],
+                    "sort": [],
+                    "offset": offset,
+                    "limit": 200
+                },
+                "d": {
+                    "is_filial": "N"
+                }
             }
-        }
-        response = requests.post(
-            self.api_url,
-            json=data,
-            auth=(self.username, self.password)
-        )
-        response = response.json()
-        return response.get("data", [])
+            response = requests.post(
+                self.api_url,
+                json=data,
+                auth=(self.username, self.password)
+            )
+            response = response.json()
+            result.extend(response.get("data", []))
+            count = response.get("count")
+            offset += 200
+            if offset >= count:
+                break
+        return result
 
     def reconciliation_act_report(self, client_id, start_date: date, end_date: date):
         params = {

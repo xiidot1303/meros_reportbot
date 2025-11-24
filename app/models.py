@@ -6,6 +6,7 @@ class Client(models.Model):
     bot_user = models.ForeignKey(
         'bot.Bot_user', null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=True, blank=True)
+    phone = models.CharField(max_length=32, null=True, blank=True)
     tg_id = models.BigIntegerField(null=True, blank=True)
 
     def __str__(self):
