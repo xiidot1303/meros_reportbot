@@ -11,7 +11,7 @@ def order_status_change_notify(order: Order):
         text = order_status_change_string(order, bot_user)
         # send notification to user
         requests.post(
-            url=f"{WEBHOOK_URL}/send-newsletter",
+            url=f"{WEBHOOK_URL}/send-newsletter/",
             json={
                 "user_id": bot_user.user_id,
                 "text": text
