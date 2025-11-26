@@ -20,7 +20,7 @@ class jobs:
 
     scheduler.add_job(
         smartup_job.check_orders, 
-        'interval', minutes=2)
+        'interval', minutes=7)
 
     # bot
     scheduler.add_job(save_langs_to_redis, 'interval', minutes=20)
