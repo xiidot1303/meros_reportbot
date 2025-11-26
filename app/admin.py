@@ -9,6 +9,6 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('deal_id', 'client', 'status', 'total_amount', 'delivery_date')
+    list_display = ('deal_id', 'client', 'client__phone', 'status', 'total_amount', 'delivery_date')
     search_fields = ('deal_id', 'client__name', 'manager')
     list_filter = ('status', 'delivery_date', 'client')
