@@ -79,40 +79,49 @@ class SmartUpApiClient:
         return file_path
 
     def get_orders(self):
-        data = {
-            "p": {
-                "column": [
-                    "deal_id",
-                    "subfilial_name",
-                    "room_name",
-                    "person_id",
-                    "person_name",
-                    "delivery_date",
-                    "tin",
-                    "price_type_names",
-                    "robot_name",
-                    "deal_time",
-                    "total_amount",
-                    "status",
-                ],
-                "filter": [
-                    "source_table",
-                    "=",
-                    [
-                        "MDEAL_HEADERS",
-                        "MVT_VISIT_HEADERS"
-                    ]
-                ],
-                "sort": [
-                    "-deal_time"
-                ],
-                "offset": 0
+        result = []
+        offset = 0
+        while True:
+            data = {
+                "p": {
+                    "column": [
+                        "deal_id",
+                        "subfilial_name",
+                        "room_name",
+                        "person_id",
+                        "person_name",
+                        "delivery_date",
+                        "tin",
+                        "price_type_names",
+                        "robot_name",
+                        "deal_time",
+                        "total_amount",
+                        "status",
+                    ],
+                    "filter": [
+                        "source_table",
+                        "=",
+                        [
+                            "MDEAL_HEADERS",
+                            "MVT_VISIT_HEADERS"
+                        ]
+                    ],
+                    "sort": [
+                        "-deal_time"
+                    ],
+                    "offset": offset,
+                    "limit": 200
+                }
             }
-        }
-        response = requests.post(
-            self.api_url,
-            json=data,
-            auth=(self.username, self.password)
-        )
-        response = response.json()
-        return response.get("data", [])
+            response = requests.post(
+                self.api_url,
+                json=data,
+                auth=(self.username, self.password)
+            )
+            response = response.json()
+            result.extend(response.get("data", []))
+            count = response.get("count")
+            offset += 200
+            if offset >= count:
+                break
+        return result
