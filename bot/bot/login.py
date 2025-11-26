@@ -48,6 +48,9 @@ async def _to_the_getting_phone_number(update: Update, context: CustomContext) -
 async def _to_the_selecting_branch(update: Update, context: CustomContext) -> int:
     """Go to selecting branch state."""
     phone = context.user_data["phone_number"]
+    bot_user: Bot_user = await get_object_by_update(update)
+    bot_user.phone = phone
+    await bot_user.asave()
     # get client
     # build keyboard with branches
     markup = InlineKeyboardMarkup(
@@ -84,6 +87,9 @@ async def get_lang(update: Update, context: CustomContext) -> str:
 
     bot_user, is_created = await Bot_user.objects.aget_or_create(
         user_id=update.effective_message.chat.id,
+        name = update.effective_message.chat.full_name,
+        firstname = update.effective_message.chat.first_name
+
     )
     bot_user.lang = lang
     await bot_user.asave()
