@@ -1,10 +1,9 @@
 from bot.resources.strings import Strings
 from app.models import Order
+from bot.models import Bot_user, Cabinet
 
-
-def order_status_change_string(order: Order):
-    if order.client:
-        bot_user = order.client.bot_user
+def order_status_change_string(order: Order, bot_user: Bot_user = None) -> str:
+    if bot_user:
         lang = bot_user.lang
     else:
         lang = 0

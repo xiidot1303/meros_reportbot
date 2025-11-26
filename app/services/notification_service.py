@@ -6,9 +6,9 @@ from bot.models import Bot_user, Cabinet
 
 
 def order_status_change_notify(order: Order):
-    text = order_status_change_string(order)
     for cabinet in Cabinet.objects.filter(client=order.client):
         bot_user: Bot_user = cabinet.bot_user
+        text = order_status_change_string(order, bot_user)
         # send notification to user
         requests.post(
             url=f"{WEBHOOK_URL}/send-newsletter",

@@ -21,7 +21,7 @@ def handle_orders_change(orders_list: list):
             defaults={
                 "status": status,
                 "project": project,
-                "client_id": client,
+                "client": client,
                 "delivery_date": datetime.strptime(delivery_date, "%d.%m.%Y").date() if delivery_date else None,
                 "tin": tin,
                 "price_type": price_type,
