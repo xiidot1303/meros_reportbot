@@ -28,7 +28,7 @@ class Order(models.Model):
     client = models.ForeignKey(Client, null=True, on_delete=models.CASCADE)
     delivery_date = models.DateField(null=True)
     tin = models.CharField(null=True, max_length=32)
-    price_type = models.CharField(null=True, max_length=64)
+    price_type = models.CharField(null=True, max_length=255)
     manager = models.CharField(null=True, max_length=255)
     total_amount = models.DecimalField(null=True, max_digits=12, decimal_places=0)
 
