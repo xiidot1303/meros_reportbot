@@ -89,6 +89,15 @@ async def newsletter_update(update: NewsletterUpdate, context: CustomContext):
             reply_markup=update.reply_markup,
             parse_mode=ParseMode.HTML,
         )
+
+    if update.location:
+        # send location
+        message = await bot.send_location(
+            chat_id=update.user_id,
+            latitude=update.location.get('latitude'),
+            longitude=update.location.get('longitude')
+        )
+
     if update.pin_message:
         await bot.pin_chat_message(chat_id=update.user_id, message_id=message.message_id)
 

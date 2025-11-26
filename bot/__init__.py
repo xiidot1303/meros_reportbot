@@ -22,6 +22,7 @@ class NewsletterUpdate:
     photo: Optional[object | str] = None
     video: Optional[object | str] = None
     document: Optional[object] = None
+    location: Optional[dict] = None
     reply_markup: Optional[ReplyKeyboardMarkup] = None
     pin_message: bool = False
 
