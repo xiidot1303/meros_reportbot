@@ -41,9 +41,6 @@ class Cabinet(models.Model):
     class Meta:
         verbose_name = "Кабинет"
         verbose_name_plural = "Кабинеты"
-        constraints = [
-            models.UniqueConstraint(fields=['is_active'], condition=Q(is_active=True), name='unique_active_cabinet')
-        ]
 
     def __str__(self) -> str:
         try:
