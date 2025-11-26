@@ -103,17 +103,17 @@ class Strings:
 
     order_info = [
 """
-Yetkazib berish sanasi: <co>{delivery_date}</code>
-Menejer: <co>{manager}</code>
+Yetkazib berish sanasi: <code>{delivery_date}</code>
+Menejer: <code>{manager}</code>
 Miqdor: <code>{total_amount}</code> UZS
 STIR: <code>{tin}</code>
 """
 ,
 """
 Дата доставки: <code>{delivery_date}</code>
-Менеджер: <co>{manager}</code>
+Менеджер: <code>{manager}</code>
 Сумма: <code>{total_amount}</code> UZS
-ИНН: <co>{tin}</code>
+ИНН: <code>{tin}</code>
 """
     ]
 
