@@ -7,7 +7,7 @@ from config import DEBUG
 from bot.views.newsletter import NewsletterView
 
 urlpatterns = [
-    path(BOT_API_TOKEN, botwebhook.BotWebhookView.as_view()),
+    path("webhook", botwebhook.BotWebhookView.as_view()),
     path('send-newsletter/', NewsletterView.as_view()),
 
 ]
