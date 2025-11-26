@@ -31,7 +31,7 @@ async def main_menu(update: Update, context: CustomContext):
             context.words.main_menu,
             reply_markup=InlineKeyboardMarkup(inline_keyboards),
         )
-        return
+        return ConversationHandler.END
     await bot.send_message(
         update.message.chat_id,
         context.words.main_menu,
