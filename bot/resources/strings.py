@@ -117,6 +117,18 @@ STIR: <code>{tin}</code>
 """
     ]
 
+    order_history_info = [
+"""
+🔸 Yetkazib berish sanasi: <code>{delivery_date}</code>
+🔸 Miqdor: <code>{total_amount} so'm</code>
+"""
+,
+"""
+🔸 Дата доставки: <code>{delivery_date}</code>
+🔸 Сумма: <code>{total_amount} сум</code>
+"""
+    ]
+
     new_order = [
         "🆕 <b>YANGI SAVDO!</b>",
         "🆕 <b>НОВАЯ ПРОДАЖА!</b>"
