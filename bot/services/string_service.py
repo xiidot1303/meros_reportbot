@@ -18,7 +18,7 @@ async def order_history_string(context: CustomContext, client: Client):
 
         result += (
             f"{text}" \
-            "\n\n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
+            "\n\n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
         )
 
     return result
@@ -36,7 +36,7 @@ async def completed_orders_history_string(context: CustomContext, orders):
         )
         result += (
             f"{text}" \
-            "\n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
+            "\n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
         )
 
     return result
