@@ -12,7 +12,7 @@ from telegram.ext import (
 from bot.resources.conversationList import *
 
 from bot.bot import (
-    main, login, reconciliation_act, cabinet
+    main, login, reconciliation_act, cabinet, orders
 )
 
 exceptions_for_filter_text = (~filters.COMMAND) & (
@@ -129,11 +129,33 @@ cabinet_handler = ConversationHandler(
 )
 
 
+orders_handler = ConversationHandler(
+    entry_points=[
+        CallbackQueryHandler(main.orders_history, pattern="^order_history$")
+    ],
+    states={
+        LOAD_MORE_ORDERS: [
+            CallbackQueryHandler(orders.load_more_orders, pattern="^load_more_orders$")
+        ]
+    },
+    fallbacks=[
+        CallbackQueryHandler(
+            callback=main.main_menu,
+            pattern="^main_menu$",
+        ),
+        CommandHandler('start', main.main_menu)
+    ],
+    allow_reentry=True,
+    persistent=True,
+    name="orders_handler"
+)
+
+
 handlers = [
     login_handler,
     reconciliation_act_handler,
     cabinet_handler,
-
+    orders_handler,
 
     TypeHandler(type=NewsletterUpdate, callback=main.newsletter_update)
 ]

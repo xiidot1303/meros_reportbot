@@ -6,6 +6,7 @@ import html
 from django.db import close_old_connections
 from app.models import Client
 from bot.bot.cabinet import _to_the_selecting_cabinet
+from bot.bot.orders import _orders_list
 
 
 async def start(update: Update, context: CustomContext):
@@ -49,6 +50,8 @@ async def switch_cabinet(update: Update, context: CustomContext):
     return await _to_the_selecting_cabinet(update, context)
 
 
+async def orders_history(update: Update, context: CustomContext):
+    return await _orders_list(update, context)
 
 
 async def newsletter_update(update: NewsletterUpdate, context: CustomContext):

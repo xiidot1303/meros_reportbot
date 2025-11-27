@@ -1,4 +1,4 @@
-n = 14
+n = 15
 (
     SELECT_LANG,
     GET_NAME,
@@ -14,4 +14,5 @@ n = 14
     GET_PHONE_NUMBER,
     GET_BRANCH,
     SELECT_CABINET,
+    LOAD_MORE_ORDERS,
 ) = range(0, n)

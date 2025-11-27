@@ -2,10 +2,12 @@ from app.models import Order, Client
 from app.services import *
 from app.services import notification_service
 from django.db import transaction
+from django.db.models import Q
+from asgiref.sync import sync_to_async
+from app.services.smartup_service import SmartUpApiClient, ApiMethods
 
 
 def handle_orders_change(orders_list: list):
-
     incoming_ids = [item[0] for item in orders_list]
     existing_orders = Order.objects.filter(deal_id__in=incoming_ids)
     existing_map = {c.deal_id: c for c in existing_orders}
@@ -88,3 +90,44 @@ def handle_orders_change(orders_list: list):
         notification_service.order_status_change_notify.delay(
             order_deal_id=created_order.deal_id
         )
+
+    # delete orders
+    Order.objects.exclude(
+        deal_id__in=incoming_ids
+    ).delete()
+
+
+@sync_to_async
+def get_archived_orders_by_client(client: Client, offset=0):
+    smartup_client = SmartUpApiClient(ApiMethods.archived_orders_list)
+    data = smartup_client.get_archived_orders_by_client(
+        client.external_id, offset=offset)
+    orders_list = []
+    for order in data:
+        deal_id = order[0]
+        project = order[1]
+        client_id = order[3]
+        delivery_date = order[5]
+        tin = order[6]
+        price_type = order[7]
+        manager = order[2]
+        deal_time = order[9]
+        total_amount = order[10]
+
+        orders_list.append(
+            Order(
+                deal_id=deal_id,
+                project=project,
+                client=client,
+                delivery_date=datetime.strptime(
+                    delivery_date, "%d.%m.%Y").date() if delivery_date else None,
+                deal_datetime=datetime.strptime(
+                    deal_time, "%d.%m.%Y %H:%M:%S") if deal_time else None,
+                tin=tin,
+                price_type=price_type,
+                manager=manager,
+                total_amount=total_amount,
+            )
+        )
+
+    return orders_list

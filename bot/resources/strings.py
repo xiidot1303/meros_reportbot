@@ -164,6 +164,42 @@ STIR: <code>{tin}</code>
         "Вы успешно переключились на организацию {client_name}! ✅"
     ]
 
+    order_history = [
+        "📦 Buyurtmalar tarixi",
+        "📦 История заказов"
+        ""
+    ]
+
+    order_no = [
+        "<b>Buyurtma №</b>",
+        "<b>Заказ №</b>"
+    ]
+
+    status = [
+        "Status",
+        "Статус"
+    ]
+
+    active_orders = [
+        "<b>Faol buyurtmalar 👇</b>",
+        "<b>Активные заказы 👇</b>"
+    ]
+
+    completed_orders = [
+        "<b>Yakunlangan buyurtmalar 👇</b>",
+        "<b>Выполненные заказы 👇</b>"
+    ]
+
+    you_can_continue_or_return = [
+        "▶️⏸️ Siz ko'proq buyurtmalarni yuklashingiz yoki asosiy menyuga qaytishingiz mumkin",
+        "▶️⏸️ Вы можете загрузить больше заказов или вернуться в главное меню."
+    ]
+
+    load_more_orders = [
+        "⏭️ Ko'proq buyurtmalarni yuklash",
+        "⏭️ Загрузить больше заказов"
+    ]
+
     _ = [
         "",
         ""

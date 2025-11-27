@@ -6,6 +6,7 @@ class ApiMethods:
     clients_list = "b/anor/mr/person/legal_person_list:table"
     reconciliation_act_report = "b/anor/rep/mkr/reconciliation_acts:run"
     orders_list = "b/trade/tdeal/order/order_list:table"
+    archived_orders_list = "b/trade/tdeal/order/order_history_list:table"
 
 
 class SmartUpApiClient:
@@ -125,3 +126,41 @@ class SmartUpApiClient:
             if offset >= count:
                 break
         return result
+
+    def get_archived_orders_by_client(self, client_id, offset = 0):
+        """Get archived orders list by client. Limit: 10"""
+        data = {
+            "p": {
+                "column": [
+                    "deal_id",
+                    "subfilial_name",
+                    "room_name",
+                    "person_id",
+                    "person_name",
+                    "delivery_date",
+                    "tin",
+                    "price_type_names",
+                    "robot_name",
+                    "deal_time",
+                    "total_amount"
+                ],
+                "filter": [
+                    "person_id",
+                    "=",
+                    [client_id]
+                ],
+                "sort": [
+                    "-deal_time"
+                ],
+                "offset": offset,
+                "limit": 10
+            }
+        }
+
+        response = requests.post(
+            self.api_url,
+            json=data,
+            auth=(self.username, self.password)
+        )
+        response = response.json()
+        return response.get("data")

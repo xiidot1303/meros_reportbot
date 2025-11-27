@@ -5,7 +5,7 @@ from app.models import Client
 
 async def _to_the_selecting_cabinet(update: Update, context: CustomContext) -> int:
     bot_user = await Bot_user.objects.aget(user_id=update.effective_message.chat.id)
-    current_cabinet = await bot_user.get_active_cabinet()
+    current_cabinet = await bot_user.get_active_cabinet
     current_client = await current_cabinet.get_client
     keyboards = [
         [

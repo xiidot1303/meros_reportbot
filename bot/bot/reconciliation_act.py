@@ -39,7 +39,7 @@ async def get_end_date(update: Update, context: CustomContext):
 
     # get current cabinet
     bot_user: Bot_user = await get_object_by_update(update)
-    cabinet: Cabinet = await bot_user.get_active_cabinet()
+    cabinet: Cabinet = await bot_user.get_active_cabinet
     client: Client = await cabinet.get_client
     smartup_client = SmartUpApiClient(ApiMethods.reconciliation_act_report)
     reconciliation_act_file_path = smartup_client.reconciliation_act_report(

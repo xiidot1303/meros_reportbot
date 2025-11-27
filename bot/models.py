@@ -28,6 +28,7 @@ class Bot_user(models.Model):
         verbose_name = "Пользователь бота"
         verbose_name_plural = "Пользователи бота"
 
+    @property
     async def get_active_cabinet(self):
         return await Cabinet.objects.aget(bot_user=self, is_active=True)
     
