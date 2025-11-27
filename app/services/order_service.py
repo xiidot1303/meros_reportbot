@@ -39,7 +39,7 @@ def handle_orders_change(orders_list: list):
                     order_obj.id)
 
             # check order price change
-            if order_obj.total_amount != total_amount:
+            if int(order_obj.total_amount) != int(total_amount):
                 old_price = order_obj.total_amount
                 order_obj.total_amount = total_amount
                 have_to_update = True
