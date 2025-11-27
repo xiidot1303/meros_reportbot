@@ -103,14 +103,14 @@ class Strings:
 
     order_info = [
 """
-Yetkazib berish sanasi: <code>{delivery_date}</code>
+Buyurtma sanasi: <code>{deal_datetime}</code>
 Menejer: <code>{manager}</code>
 Miqdor: <code>{total_amount} so'm</code>
 STIR: <code>{tin}</code>
 """
 ,
 """
-Дата доставки: <code>{delivery_date}</code>
+Дата заказа: <code>{deal_datetime}</code>
 Менеджер: <code>{manager}</code>
 Сумма: <code>{total_amount} сум</code>
 ИНН: <code>{tin}</code>
@@ -125,6 +125,11 @@ STIR: <code>{tin}</code>
     order_status_changed_to = [
         "<b>🔄 BUYURTMA HOLATI O'ZGARDI: </b>",
         "<b>🔄 СТАТУС ЗАКАЗА ИЗМЕНИЛСЯ НА: </b>"
+    ]
+
+    order_price_changed = [
+        "<b>🔄 BUYURTMA NARXI O'ZGARDI!</b>",
+        "<b>🔄 СУММА ИЗМЕНИЛАСЬ!</b>"
     ]
 
     send_phone_number = [

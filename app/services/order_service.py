@@ -13,6 +13,7 @@ def handle_orders_change(orders_list: list):
         tin = order[6]
         price_type = order[7]
         manager = order[2]
+        deal_time = order[9]
         total_amount = order[10]
         client = Client.objects.filter(external_id=client_id).first()
         # create new order or get existing
@@ -23,6 +24,7 @@ def handle_orders_change(orders_list: list):
                 "project": project,
                 "client": client,
                 "delivery_date": datetime.strptime(delivery_date, "%d.%m.%Y").date() if delivery_date else None,
+                "deal_datetime": datetime.strptime(deal_time, "%d.%m.%Y %H:%M:%S") if deal_time else None,
                 "tin": tin,
                 "price_type": price_type,
                 "manager": manager,
@@ -43,5 +45,9 @@ def handle_orders_change(orders_list: list):
          
             # check order price change
             if order_obj.total_amount != total_amount:
+                old_price = order_obj.total_amount
                 order_obj.total_amount = total_amount
                 order_obj.save()
+
+
+

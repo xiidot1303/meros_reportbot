@@ -27,6 +27,7 @@ class Order(models.Model):
     project = models.CharField(null=True, max_length=255)
     client = models.ForeignKey(Client, null=True, on_delete=models.CASCADE)
     delivery_date = models.DateField(null=True)
+    deal_datetime = models.DateTimeField(null=True)
     tin = models.CharField(null=True, max_length=32)
     price_type = models.CharField(null=True, max_length=255)
     manager = models.CharField(null=True, max_length=255)
