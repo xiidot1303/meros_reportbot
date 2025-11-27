@@ -105,14 +105,14 @@ class Strings:
 """
 Yetkazib berish sanasi: <code>{delivery_date}</code>
 Menejer: <code>{manager}</code>
-Miqdor: <code>{total_amount}</code> UZS
+Miqdor: <code>{total_amount} so'm</code>
 STIR: <code>{tin}</code>
 """
 ,
 """
 Дата доставки: <code>{delivery_date}</code>
 Менеджер: <code>{manager}</code>
-Сумма: <code>{total_amount}</code> UZS
+Сумма: <code>{total_amount} сум</code>
 ИНН: <code>{tin}</code>
 """
     ]
@@ -123,8 +123,8 @@ STIR: <code>{tin}</code>
     ]
 
     order_status_changed_to = [
-        "BUYURTMA HOLATI O'ZGARDI: ",
-        "СТАТУС ЗАКАЗА ИЗМЕНИЛСЯ НА: "
+        "<b>🔄 BUYURTMA HOLATI O'ZGARDI: </b>",
+        "<b>🔄 СТАТУС ЗАКАЗА ИЗМЕНИЛСЯ НА: </b>"
     ]
 
     send_phone_number = [
@@ -135,8 +135,8 @@ STIR: <code>{tin}</code>
     ]
 
     please_select_your_branch = [
-        "Iltimos, fillialingizni tanlang:",
-        "Пожалуйста, выберите ваш филиал:"
+        "Iltimos, tashkilotingizni tanlang:",
+        "Пожалуйста, выберите вашу организацию:"
     ]
 
     please_send_your_contact_via_button = [
@@ -145,23 +145,18 @@ STIR: <code>{tin}</code>
     ]
 
     switch_cabinet = [
-        "🔄 Kabinetni almashtirish",
-        "🔄 Смена кабинета"
+        "🔄 Tashkilotni o'zgartirish",
+        "🔄 Изменить организацию"
     ]
 
     select_cabinet = [
-        "Iltimos, kabinetni tanlang:",
-        "Пожалуйста, выберите кабинет:"
-    ]
-
-    add_cabinet = [
-        "➕ Yangi kabinet qo'shish",
-        "➕ Добавить новый кабинет"
+        "Iltimos, tashkilotni tanlang:",
+        "Пожалуйста, выберите вашу организацию:"
     ]
 
     cabinet_switched = [
-        "Siz muvaffaqiyatli ravishda {client_name} kabinetiga o'tdingiz! ✅",
-        "Вы успешно переключились на кабинет {client_name}! ✅"
+        "Siz muvaffaqiyatli ravishda {client_name} tashkilotiga o'tdingiz! ✅",
+        "Вы успешно переключились на организацию {client_name}! ✅"
     ]
 
     _ = [

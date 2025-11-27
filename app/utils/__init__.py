@@ -103,3 +103,7 @@ class DictToClass:
     def __repr__(self):
         # This will allow a readable representation of the object when printed
         return f"{self.__class__.__name__}({self.__dict__})"
+
+
+def format_number(n):
+    return f"{n:,}".replace(",", " ")
