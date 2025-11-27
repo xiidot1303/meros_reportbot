@@ -17,8 +17,12 @@ def send_newsletter(user_id, text):
 
 
 @app.task(name="app.services.notification_service.order_status_change_notify")
-def order_status_change_notify(order_id):
-    order: Order = Order.objects.get(pk = order_id)
+def order_status_change_notify(order_id=None, order_deal_id=None):
+    if order_deal_id:
+        order: Order = Order.objects.filter(deal_id = order_deal_id).first()
+    else:
+        order: Order = Order.objects.get(pk = order_id)
+
 
     for cabinet in Cabinet.objects.filter(client=order.client):
         bot_user: Bot_user = cabinet.bot_user

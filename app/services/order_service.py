@@ -33,7 +33,8 @@ def handle_orders_change(orders_list: list):
                 order_obj.status = status
                 have_to_update = True
                 # notify about status change
-                notification_service.order_status_change_notify.delay(order_obj.id)
+                notification_service.order_status_change_notify.delay(
+                    order_obj.id)
 
             # check order price change
             if order_obj.total_amount != total_amount:
@@ -41,7 +42,8 @@ def handle_orders_change(orders_list: list):
                 order_obj.total_amount = total_amount
                 have_to_update = True
                 # notify about price change
-                notification_service.order_price_change_notify.delay(order_obj.id, old_price)
+                notification_service.order_price_change_notify.delay(
+                    order_obj.id, old_price)
 
             if have_to_update:
                 to_update.append(order_obj)
@@ -72,15 +74,17 @@ def handle_orders_change(orders_list: list):
         if to_create:
             # deal by 500 to avoid too large queries
             for i in range(0, len(to_create), 500):
-                created_orders = Order.objects.bulk_create(to_create[i:i+500], ignore_conflicts=True)
-                for created_order in created_orders:
-                    notification_service.order_status_change_notify.delay(created_order.id)
+                created_orders = Order.objects.bulk_create(
+                    to_create[i:i+500], ignore_conflicts=True)
 
         if to_update:
             # Update existing clients by 500 to avoid too large queries
             for i in range(0, len(to_update), 500):
-                Order.objects.bulk_update(to_update[i:i+500], ["status", "total_amount"])
+                Order.objects.bulk_update(
+                    to_update[i:i+500], ["status", "total_amount"])
 
-        
-        
-        
+    # send notification to all created orders
+    for created_order in to_create:
+        notification_service.order_status_change_notify.delay(
+            order_deal_id=created_order.deal_id
+        )

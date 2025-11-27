@@ -12,7 +12,7 @@ def order_status_change_string(order: Order, bot_user: Bot_user = None) -> str:
     status_code = order.status
     text = (
         f"""{Strings.new_order[lang] if status_code == 'B#N' else 
-           (Strings.order_status_changed_to[lang] + "<i>" + Order.get_status_label(status_code))}</i>\n""" \
+           (Strings.order_status_changed_to[lang] + "<i>" + Order.get_status_label(status_code) + "</i>")}\n""" \
         f"{Strings.order_info[lang]}".format(
             deal_datetime = order.deal_datetime.strftime("%d.%m.%Y %H:%M:%S"),
             manager = order.manager,
