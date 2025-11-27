@@ -32,7 +32,7 @@ def order_price_change_string(order: Order, bot_user: Bot_user, old_price):
     status_code = order.status
     
     text = (
-        f"""{Strings.order_price_changed}\n""" \
+        f"""{Strings.order_price_changed[lang]}\n""" \
         f"{Strings.order_info[lang]}".format(
             deal_datetime = order.deal_datetime.strftime("%d.%m.%Y %H:%M:%S"),
             manager = order.manager,

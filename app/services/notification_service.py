@@ -1,3 +1,4 @@
+from core.celery import app
 from app.models import Order
 from app.services.string_service import *
 import requests
@@ -15,7 +16,10 @@ def send_newsletter(user_id, text):
     )
 
 
-def order_status_change_notify(order: Order):
+@app.task(name="app.services.notification_service.order_status_change_notify")
+def order_status_change_notify(order_id):
+    order: Order = Order.objects.get(pk = order_id)
+
     for cabinet in Cabinet.objects.filter(client=order.client):
         bot_user: Bot_user = cabinet.bot_user
         text = order_status_change_string(order, bot_user)
@@ -23,7 +27,9 @@ def order_status_change_notify(order: Order):
         send_newsletter(bot_user.user_id, text)
 
 
-def order_price_change_notify(order: Order, old_price):
+@app.task(name="app.services.notification_service.order_price_change_notify")
+def order_price_change_notify(order_id, old_price):
+    order: Order = Order.objects.get(pk=order_id)
     for cabinet in Cabinet.objects.filter(client=order.client):
         bot_user: Bot_user = cabinet.bot_user
         text = order_price_change_string(order, bot_user, old_price)
