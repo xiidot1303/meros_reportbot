@@ -17,7 +17,7 @@ def update_clients_by_data(data):
     to_create = []
     to_update = []
 
-    for name, external_id, phone in raw_items:
+    for name, external_id, phone, payment_deferment in raw_items:
         if phone:
             # Normalize phone number
             phone = phone.strip()
@@ -34,13 +34,24 @@ def update_clients_by_data(data):
                 phone = "+" + phone
             else:
                 phone = None
-                
+
+        if payment_deferment:
+            payment_deferment, *args = payment_deferment.split(" ")
+            if payment_deferment.isdigit():
+                payment_deferment = int(payment_deferment)
+
+
         if external_id in existing_map:
             # Update existing object
             client = existing_map[external_id]
-            if client.name != name or client.phone != phone:   # Update only if changed
+            if (
+                client.name != name or
+                client.phone != phone or
+                client.payment_deferment != payment_deferment
+            ):
                 client.name = name
                 client.phone = phone
+                client.payment_deferment = payment_deferment
                 to_update.append(client)
         else:
             # Prepare new object
@@ -53,9 +64,11 @@ def update_clients_by_data(data):
         if to_create:
             # deal by 500 to avoid too large queries
             for i in range(0, len(to_create), 500):
-                Client.objects.bulk_create(to_create[i:i+500], ignore_conflicts=True)
+                Client.objects.bulk_create(
+                    to_create[i:i+500], ignore_conflicts=True)
 
         if to_update:
             # Update existing clients by 500 to avoid too large queries
             for i in range(0, len(to_update), 500):
-                Client.objects.bulk_update(to_update[i:i+500], ["name", "phone"])
+                Client.objects.bulk_update(
+                    to_update[i:i+500], ["name", "phone"])

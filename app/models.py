@@ -5,6 +5,7 @@ class Client(models.Model):
     external_id = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     phone = models.CharField(max_length=32, null=True, blank=True)
+    payment_deferment = models.IntegerField(null=True, blank=True)
     tg_id = models.BigIntegerField(null=True, blank=True)
 
     def __str__(self):
