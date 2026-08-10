@@ -26,3 +26,10 @@ WEBAPP_URL = os.environ.get("WEBAPP_URL")
 SMARTUP_API_URL = os.environ.get("SMARTUP_API_URL")
 SMARTUP_USERNAME = os.environ.get("SMARTUP_USERNAME")
 SMARTUP_PASSWORD = os.environ.get("SMARTUP_PASSWORD")
+
+# SMART UP Oracle database
+ORACLE_HOST = os.environ.get("ORACLE_HOST")
+ORACLE_PORT = os.environ.get("ORACLE_PORT")
+ORACLE_SERVICE_NAME = os.environ.get("ORACLE_SERVICE_NAME")
+ORACLE_USER = os.environ.get("ORACLE_USER")
+ORACLE_PASSWORD = os.environ.get("ORACLE_PASSWORD")
