@@ -114,7 +114,11 @@ cabinet_handler = ConversationHandler(
             CallbackQueryHandler(
                 cabinet.get_cabinet,
                 pattern="^switch_to-\d+$"
-            )
+            ),
+            CallbackQueryHandler(
+                cabinet.sign_out,
+                pattern="^sign_out$"
+            ),
         ]
     },
     fallbacks=[

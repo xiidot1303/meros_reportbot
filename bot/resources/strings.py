@@ -176,6 +176,16 @@ STIR: <code>{tin}</code>
         "Вы успешно переключились на организацию {client_name}! ✅"
     ]
 
+    sign_out = [
+        "🚪 Chiqish",
+        "🚪 Выйти"
+    ]
+
+    signed_out = [
+        "Siz kabinetdan chiqdingiz. Qayta kirish uchun /start bosing.",
+        "Вы вышли из кабинета. Для повторного входа нажмите /start."
+    ]
+
     order_history = [
         "📦 Buyurtmalar tarixi",
         "📦 История заказов"

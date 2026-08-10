@@ -21,9 +21,13 @@ async def _to_the_selecting_cabinet(update: Update, context: CustomContext) -> i
             text=context.words.main_menu,
             callback_data="main_menu"
         )
-
-    ]
-    )
+    ])
+    keyboards.append([
+        InlineKeyboardButton(
+            text=context.words.sign_out,
+            callback_data="sign_out"
+        )
+    ])
     markup = InlineKeyboardMarkup(
         keyboards
     )
@@ -59,3 +63,14 @@ async def get_cabinet(update: Update, context: CustomContext) -> Cabinet:
         show_alert=True
     )
     return await main_menu(update, context)
+
+
+async def sign_out(update: Update, context: CustomContext):
+    bot_user: Bot_user = await get_object_by_update(update)
+    await Cabinet.objects.filter(bot_user=bot_user).adelete()
+    await update.callback_query.answer(
+        text=context.words.signed_out,
+        show_alert=True
+    )
+    await update.callback_query.edit_message_text(context.words.signed_out)
+    return ConversationHandler.END
