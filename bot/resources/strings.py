@@ -212,6 +212,11 @@ STIR: <code>{tin}</code>
         "⏭️ Загрузить больше заказов"
     ]
 
+    show_completed_orders = [
+        "📦 Yakunlangan buyurtmalarni ko'rsatish",
+        "📦 Показать выполненные заказы"
+    ]
+
     _ = [
         "",
         ""

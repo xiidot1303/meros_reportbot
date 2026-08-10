@@ -135,6 +135,7 @@ orders_handler = ConversationHandler(
     ],
     states={
         LOAD_MORE_ORDERS: [
+            CallbackQueryHandler(orders.show_completed_orders, pattern="^show_completed_orders$"),
             CallbackQueryHandler(orders.load_more_orders, pattern="^load_more_orders$")
         ]
     },
