@@ -13,7 +13,7 @@ async def _to_the_selecting_cabinet(update: Update, context: CustomContext) -> i
                 text=f"{client.name}",
                 callback_data=f"switch_to-{client.id}"
             )
-        ] async for client in Client.objects.filter(phone=current_client.phone).exclude(id = current_client.id)
+        ] async for client in Client.objects.filter(phone=bot_user.phone).exclude(id = current_client.id)
 
     ]
     keyboards.append([
