@@ -6,6 +6,7 @@ import html
 from django.db import close_old_connections
 from app.models import Client
 from bot.bot.cabinet import _to_the_selecting_cabinet
+from bot.bot.debts import _client_debts
 from bot.bot.orders import _orders_list
 
 
@@ -13,7 +14,7 @@ async def start(update: Update, context: CustomContext):
     if await is_group(update):
         return
 
-    if await is_registered(update.message.chat.id):
+    if await is_registered(update.effective_chat.id):
         # some functions
         await main_menu(update, context)
     else:
@@ -33,7 +34,7 @@ async def start(update: Update, context: CustomContext):
                 ]
             ]
         )
-        await update.message.reply_text(
+        await update.effective_chat.send_message(
             hello_text,
             reply_markup=reply_markup,
         )
@@ -52,6 +53,10 @@ async def switch_cabinet(update: Update, context: CustomContext):
 
 async def orders_history(update: Update, context: CustomContext):
     return await _orders_list(update, context)
+
+
+async def client_debts(update: Update, context: CustomContext):
+    return await _client_debts(update, context)
 
 
 async def newsletter_update(update: NewsletterUpdate, context: CustomContext):

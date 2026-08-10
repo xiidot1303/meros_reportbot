@@ -1,6 +1,8 @@
 from bot.utils.bot_functions import *
+from telegram import Update
 
-async def get_callback_query_data(update):
+
+async def get_callback_query_data(update: Update):
     data = await update.data
     *args, result = str(data).split('_')
     return result
@@ -22,8 +24,8 @@ async def remove_inline_keyboards_from_last_msg(update, context):
     except:
         return None
 
-async def is_group(update):
-    if update.message.chat.type == 'group' or update.message.chat.type == 'supergroup':
+async def is_group(update: Update):
+    if update.effective_chat.type == 'group' or update.effective_chat.type == 'supergroup':
         return True
     return False
 

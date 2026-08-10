@@ -7,6 +7,7 @@ class ApiMethods:
     reconciliation_act_report = "b/anor/rep/mkr/reconciliation_acts:run"
     orders_list = "b/trade/tdeal/order/order_list:table"
     archived_orders_list = "b/trade/tdeal/order/order_history_list:table"
+    debts_list = "b/anor/mdeal/order/offset/offset_detail_list:table"
 
 
 class SmartUpApiClient:
@@ -21,28 +22,16 @@ class SmartUpApiClient:
         while True:
             data = {
                 "p": {
-                    "column": [
-                        "name",
-                        "person_id",
-                        "main_phone"
-                    ],
-                    "filter": [
-                        "state",
-                        "=",
-                        "A"
-                    ],
+                    "column": ["name", "person_id", "main_phone"],
+                    "filter": ["state", "=", "A"],
                     "sort": [],
                     "offset": offset,
-                    "limit": 200
+                    "limit": 200,
                 },
-                "d": {
-                    "is_filial": "N"
-                }
+                "d": {"is_filial": "N"},
             }
             response = requests.post(
-                self.api_url,
-                json=data,
-                auth=(self.username, self.password)
+                self.api_url, json=data, auth=(self.username, self.password)
             )
             response = response.json()
             result.extend(response.get("data", []))
@@ -64,13 +53,11 @@ class SmartUpApiClient:
             "is_detail": "",
             "-project_code": "trade",
             "-project_hash": "01",
-            "-lang_code": "ru"
+            "-lang_code": "ru",
         }
 
         response = requests.get(
-            self.api_url,
-            params=params,
-            auth=(self.username, self.password)
+            self.api_url, params=params, auth=(self.username, self.password)
         )
         # download file from response
         os.makedirs("files/reconciliation_acts", exist_ok=True)
@@ -102,22 +89,15 @@ class SmartUpApiClient:
                     "filter": [
                         "source_table",
                         "=",
-                        [
-                            "MDEAL_HEADERS",
-                            "MVT_VISIT_HEADERS"
-                        ]
+                        ["MDEAL_HEADERS", "MVT_VISIT_HEADERS"],
                     ],
-                    "sort": [
-                        "-deal_time"
-                    ],
+                    "sort": ["-deal_time"],
                     "offset": offset,
-                    "limit": 200
+                    "limit": 200,
                 }
             }
             response = requests.post(
-                self.api_url,
-                json=data,
-                auth=(self.username, self.password)
+                self.api_url, json=data, auth=(self.username, self.password)
             )
             response = response.json()
             result.extend(response.get("data", []))
@@ -127,7 +107,7 @@ class SmartUpApiClient:
                 break
         return result
 
-    def get_archived_orders_by_client(self, client_id, offset = 0):
+    def get_archived_orders_by_client(self, client_id, offset=0):
         """Get archived orders list by client. Limit: 10"""
         data = {
             "p": {
@@ -142,25 +122,58 @@ class SmartUpApiClient:
                     "price_type_names",
                     "robot_name",
                     "deal_time",
-                    "total_amount"
+                    "total_amount",
                 ],
-                "filter": [
-                    "person_id",
-                    "=",
-                    [client_id]
-                ],
-                "sort": [
-                    "-deal_time"
-                ],
+                "filter": ["person_id", "=", [client_id]],
+                "sort": ["-deal_time"],
                 "offset": offset,
-                "limit": 10
+                "limit": 10,
             }
         }
 
         response = requests.post(
-            self.api_url,
-            json=data,
-            auth=(self.username, self.password)
+            self.api_url, json=data, auth=(self.username, self.password)
         )
         response = response.json()
         return response.get("data")
+
+    def get_debts_by_client(self, client_id):
+        result = []
+        offset = 0
+        while True:
+            data = {
+                "p": {
+                    "column": [
+                        "deal_id",
+                        "expiry_date",
+                        "debt_amount",
+                        "overdue_days",
+                        "delivery_number",
+                    ],
+                    "filter": [
+                        "and",
+                        [
+                            ["base_status", "=", ["A", "-1"]],
+                            ["person_id", "=", [client_id]],
+                        ],
+                    ],
+                    "sort": ["-expiry_date"],
+                    "offset": offset,
+                    "limit": 200,
+                },
+                "d": {},
+            }
+
+            response = requests.post(
+                self.api_url, json=data, auth=(self.username, self.password)
+            )
+            response = response.json()
+            rows = response.get("data", [])
+            result.extend(rows)
+
+            count = response.get("count", 0)
+            offset += 200
+            if offset >= count:
+                break
+
+        return result

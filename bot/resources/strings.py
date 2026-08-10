@@ -182,6 +182,11 @@ STIR: <code>{tin}</code>
         ""
     ]
 
+    client_debts = [
+        "💰 Qarzdorlik",
+        "💰 Задолженность"
+    ]
+
     order_no = [
         "<b>Buyurtma №</b>",
         "<b>Заказ №</b>"
@@ -215,6 +220,26 @@ STIR: <code>{tin}</code>
     show_completed_orders = [
         "📦 Yakunlangan buyurtmalarni ko'rsatish",
         "📦 Показать выполненные заказы"
+    ]
+
+    no_debts_found = [
+        "Qarzdorlik topilmadi.",
+        "Задолженность не найдена."
+    ]
+
+    total_debt_amount = [
+        "<b>Jami qarzdorlik:</b> <code>{amount}</code>",
+        "<b>Общая сумма задолженности:</b> <code>{amount}</code>"
+    ]
+
+    total_debt_rows = [
+        "<b>Qarzdorliklar soni:</b> <code>{count}</code>",
+        "<b>Количество задолженностей:</b> <code>{count}</code>"
+    ]
+
+    debts_loading = [
+        "Qarzdorliklar yuklanmoqda...",
+        "Задолженности загружаются..."
     ]
 
     _ = [

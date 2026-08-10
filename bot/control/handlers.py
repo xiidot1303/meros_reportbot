@@ -21,6 +21,7 @@ exceptions_for_filter_text = (~filters.COMMAND) & (
 login_handler = ConversationHandler(
     entry_points=[
         CommandHandler("start", main.start),
+        CallbackQueryHandler(main.start, pattern="main_menu"),
     ],
     states={
         SELECT_LANG: [
@@ -152,11 +153,30 @@ orders_handler = ConversationHandler(
 )
 
 
+debts_handler = ConversationHandler(
+    entry_points=[
+        CallbackQueryHandler(main.client_debts, pattern="^client_debts$")
+    ],
+    states={},
+    fallbacks=[
+        CallbackQueryHandler(
+            callback=main.main_menu,
+            pattern="^main_menu$",
+        ),
+        CommandHandler('start', main.main_menu)
+    ],
+    allow_reentry=True,
+    persistent=True,
+    name="debts_handler"
+)
+
+
 handlers = [
     login_handler,
     reconciliation_act_handler,
     cabinet_handler,
     orders_handler,
+    debts_handler,
 
     TypeHandler(type=NewsletterUpdate, callback=main.newsletter_update)
 ]

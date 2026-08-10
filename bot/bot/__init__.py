@@ -25,6 +25,7 @@ async def main_menu(update: Update, context: CustomContext):
     inline_keyboards = [
         [InlineKeyboardButton(text=context.words.reconciliation_act, callback_data="reconciliation_act")],
         [InlineKeyboardButton(text=context.words.order_history, callback_data="order_history")],
+        [InlineKeyboardButton(text=context.words.client_debts, callback_data="client_debts")],
         [InlineKeyboardButton(text=context.words.switch_cabinet, callback_data="switch_cabinet")],
     ]
     if update.callback_query:
@@ -34,7 +35,7 @@ async def main_menu(update: Update, context: CustomContext):
         )
         return ConversationHandler.END
     await bot.send_message(
-        update.message.chat_id,
+        update.effective_chat.id,
         context.words.main_menu,
         reply_markup=InlineKeyboardMarkup(inline_keyboards),
     )
