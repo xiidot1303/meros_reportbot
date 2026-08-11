@@ -1,3 +1,4 @@
+import base64
 import json
 from django.http import HttpResponse, JsonResponse, HttpRequest
 from django.utils.decorators import method_decorator
@@ -17,6 +18,11 @@ class NewsletterView(View):
         inline_buttons = data.get('inline_buttons', [])
         keyboard_buttons = data.get('keyboard_buttons', [])
         location = data.get('location', None)
+        document = data.get('document')
+        document_name = data.get('document_name')
+        document_bytes = None
+        if document:
+            document_bytes = base64.b64decode(document)
         reply_markup = None
         if inline_buttons:
             reply_markup = InlineKeyboardMarkup(inline_buttons)
@@ -27,7 +33,9 @@ class NewsletterView(View):
                     user_id=int(user_id),
                     text=text,
                     reply_markup=reply_markup,
-                    location=location
+                    location=location,
+                    document=document_bytes,
+                    document_name=document_name,
                 ))
         
         return JsonResponse({"status": "success", "message": "Newsletter sent successfully."})

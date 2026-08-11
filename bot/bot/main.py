@@ -1,4 +1,5 @@
 from bot.bot import *
+import io
 import json
 import logging
 import traceback
@@ -89,11 +90,14 @@ async def newsletter_update(update: NewsletterUpdate, context: CustomContext):
             parse_mode=ParseMode.HTML,
         )
     if update.document:
+        document = update.document
+        if isinstance(document, (bytes, bytearray)):
+            document = io.BytesIO(document)
+            document.name = update.document_name or "report.xlsx"
         # send document
         message = await bot.send_document(
             update.user_id,
-            update.document,
-            caption=update.text,
+            document,
             reply_markup=update.reply_markup,
             parse_mode=ParseMode.HTML,
         )

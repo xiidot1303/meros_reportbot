@@ -1,3 +1,5 @@
+import requests
+
 from app.services import *
 from config import SMARTUP_API_URL, SMARTUP_PASSWORD, SMARTUP_USERNAME
 
@@ -8,6 +10,8 @@ class ApiMethods:
     orders_list = "b/trade/tdeal/order/order_list:table"
     archived_orders_list = "b/trade/tdeal/order/order_history_list:table"
     debts_list = "b/anor/mdeal/order/offset/offset_detail_list:table"
+    order_report_template = "b/trade/tdeal/order/order_list:save_report_template"
+    order_report_download = "b/anor/rep/mdeal/order_report:run"
 
 
 class SmartUpApiClient:
@@ -15,6 +19,25 @@ class SmartUpApiClient:
         self.api_url = f"{SMARTUP_API_URL}/{url}"
         self.username = SMARTUP_USERNAME
         self.password = SMARTUP_PASSWORD
+
+    def save_report_template(self, deal_id):
+        response = requests.post(
+            f"{SMARTUP_API_URL}/{ApiMethods.order_report_template}",
+            json={"deal_id": str(deal_id)},
+            auth=(self.username, self.password),
+        )
+        response.raise_for_status()
+        payload = response.json()
+        return payload.get("report_template_id")
+
+    def download_order_report(self, report_template_id):
+        response = requests.get(
+            f"{SMARTUP_API_URL}/{ApiMethods.order_report_download}",
+            params={"template_id": 41, "report_template_id": report_template_id},
+            auth=(self.username, self.password),
+        )
+        response.raise_for_status()
+        return response.content
 
     def get_clients(self):
         result = []
