@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from app.models import Order, Client
 from app.services import *
 from app.services import notification_service
@@ -39,7 +41,9 @@ def handle_orders_change(orders_list: list):
                     order_obj.id)
 
             # check order price change
-            if int(order_obj.total_amount) != int(total_amount):
+            current_total = Decimal(str(order_obj.total_amount)) if order_obj.total_amount is not None else None
+            incoming_total = Decimal(str(total_amount)) if total_amount is not None else None
+            if current_total != incoming_total:
                 old_price = order_obj.total_amount
                 order_obj.total_amount = total_amount
                 have_to_update = True
