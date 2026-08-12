@@ -4,28 +4,31 @@ from core.celery import app
 from app.models import Order
 from app.services.string_service import *
 import requests
-from config import WEBHOOK_URL
+from config import NEWSLETTER_URL
 from bot.models import Bot_user, Cabinet
 from app.services.smartup_service import SmartUpApiClient, ApiMethods
 
 
 def send_newsletter(user_id, text):
     requests.post(
-        url=f"{WEBHOOK_URL}/send-newsletter/",
+        url=f"{NEWSLETTER_URL}/send-newsletter/",
         json={
             "user_id": user_id,
             "text": text
         }
     )
 
-def send_newsletter_with_document(user_id, document, document_name="report.xlsx"):
+def send_newsletter_with_document(user_id, document, document_name="report.xlsx", text=None):
+    payload = {
+        "user_id": user_id,
+        "document": base64.b64encode(document).decode("utf-8"),
+        "document_name": document_name,
+    }
+    if text:
+        payload["text"] = text
     requests.post(
-        url=f"{WEBHOOK_URL}/send-newsletter/",
-        json={
-            "user_id": user_id,
-            "document": base64.b64encode(document).decode("utf-8"),
-            "document_name": document_name,
-        }
+        url=f"{NEWSLETTER_URL}/send-newsletter/",
+        json=payload
     )
 
 

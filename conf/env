@@ -16,6 +16,10 @@ SMARTUP_API_URL=<smartup_api_url>
 SMARTUP_USERNAME=<smartup_username>
 SMARTUP_PASSWORD=<smartup_password>
 
+SOLIQ_BASE_URL=https://new.soliqservis.uz
+SOLIQ_USERNAME=<soliq_username>
+SOLIQ_PASSWORD=<soliq_password>
+
 ORACLE_HOST=<oracle_host>
 ORACLE_PORT=<oracle_port>
 ORACLE_SERVICE_NAME=<oracle_service_name>

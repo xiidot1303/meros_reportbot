@@ -20,12 +20,18 @@ DB_PASSWORD = os.environ.get("DB_PASSWORD")
 # Telegram bot
 BOT_API_TOKEN = os.environ.get("BOT_API_TOKEN")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
+NEWSLETTER_URL = os.environ.get("NEWSLETTER_URL")
 WEBAPP_URL = os.environ.get("WEBAPP_URL")
 
 # SMART UP
 SMARTUP_API_URL = os.environ.get("SMARTUP_API_URL")
 SMARTUP_USERNAME = os.environ.get("SMARTUP_USERNAME")
 SMARTUP_PASSWORD = os.environ.get("SMARTUP_PASSWORD")
+
+# SOLIQ EDO
+SOLIQ_BASE_URL = os.environ.get("SOLIQ_BASE_URL", "https://new.soliqservis.uz")
+SOLIQ_USERNAME = os.environ.get("SOLIQ_USERNAME")
+SOLIQ_PASSWORD = os.environ.get("SOLIQ_PASSWORD")
 
 # SMART UP Oracle database
 ORACLE_HOST = os.environ.get("ORACLE_HOST")

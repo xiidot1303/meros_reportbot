@@ -98,6 +98,7 @@ async def newsletter_update(update: NewsletterUpdate, context: CustomContext):
         message = await bot.send_document(
             update.user_id,
             document,
+            caption=update.text,
             reply_markup=update.reply_markup,
             parse_mode=ParseMode.HTML,
         )
