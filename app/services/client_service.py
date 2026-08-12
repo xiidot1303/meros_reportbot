@@ -1,6 +1,19 @@
+import re
+
 from app.services import *
 from app.models import Client
 from django.db import transaction
+
+
+def parse_deferment_value(value, blank_default=None):
+    if not value:
+        return blank_default
+
+    match = re.search(r"\d+", value)
+    if match:
+        return int(match.group())
+
+    return 30
 
 
 def update_clients_by_data(data):
@@ -17,7 +30,7 @@ def update_clients_by_data(data):
     to_create = []
     to_update = []
 
-    for name, external_id, phone, payment_deferment in raw_items:
+    for name, external_id, phone, deferment_raw, secondary_deferment_raw, tin in raw_items:
         if phone:
             # Normalize phone number
             phone = phone.strip()
@@ -35,10 +48,12 @@ def update_clients_by_data(data):
             else:
                 phone = None
 
-        if payment_deferment:
-            payment_deferment, *args = payment_deferment.split(" ")
-            if payment_deferment.isdigit():
-                payment_deferment = int(payment_deferment)
+        deferment_days = parse_deferment_value(deferment_raw, blank_default=None)
+        secondary_deferment_days = parse_deferment_value(
+            secondary_deferment_raw,
+            blank_default=30,
+        )
+        payment_deferment = deferment_days
 
 
         if external_id in existing_map:
@@ -47,16 +62,30 @@ def update_clients_by_data(data):
             if (
                 client.name != name or
                 client.phone != phone or
-                client.payment_deferment != payment_deferment
+                client.payment_deferment != payment_deferment or
+                client.deferment_days != deferment_days or
+                client.secondary_deferment_days != secondary_deferment_days or
+                client.tin != tin
             ):
                 client.name = name
                 client.phone = phone
                 client.payment_deferment = payment_deferment
+                client.deferment_days = deferment_days
+                client.secondary_deferment_days = secondary_deferment_days
+                client.tin = tin
                 to_update.append(client)
         else:
             # Prepare new object
             to_create.append(
-                Client(external_id=external_id, name=name, phone=phone)
+                Client(
+                    external_id=external_id,
+                    name=name,
+                    phone=phone,
+                    payment_deferment=payment_deferment,
+                    deferment_days=deferment_days,
+                    secondary_deferment_days=secondary_deferment_days,
+                    tin=tin,
+                )
             )
 
     # Step 3 — Perform bulk operations
@@ -71,4 +100,13 @@ def update_clients_by_data(data):
             # Update existing clients by 500 to avoid too large queries
             for i in range(0, len(to_update), 500):
                 Client.objects.bulk_update(
-                    to_update[i:i+500], ["name", "phone"])
+                    to_update[i:i+500],
+                    [
+                        "name",
+                        "phone",
+                        "payment_deferment",
+                        "deferment_days",
+                        "secondary_deferment_days",
+                        "tin",
+                    ],
+                )

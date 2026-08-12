@@ -45,7 +45,14 @@ class SmartUpApiClient:
         while True:
             data = {
                 "p": {
-                    "column": ["name", "person_id", "main_phone"],
+                    "column": [
+                        "name",
+                        "person_id",
+                        "main_phone",
+                        "group_name5",
+                        "group_name6",
+                        "tin",
+                    ],
                     "filter": ["state", "=", "A"],
                     "sort": [],
                     "offset": offset,
