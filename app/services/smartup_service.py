@@ -117,9 +117,19 @@ class SmartUpApiClient:
                         "status",
                     ],
                     "filter": [
-                        "source_table",
-                        "=",
-                        ["MDEAL_HEADERS", "MVT_VISIT_HEADERS"],
+                        "and",
+                        [
+                            ["status", "=", ["B#W", "B#S", "B#V"]],
+                            [
+                                "source_table",
+                                "=",
+                                [
+                                    "MDEAL_HEADERS",
+                                    "MVT_VISIT_HEADERS",
+                                    "MCC_PERSON_CALL_PLANS",
+                                ],
+                            ],
+                        ],
                     ],
                     "sort": ["-deal_time"],
                     "offset": offset,
