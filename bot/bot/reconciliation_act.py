@@ -1,10 +1,22 @@
 from datetime import date, timedelta
 
+from openpyxl import load_workbook
+
 from bot.bot import *
 from app.utils import *
 from app.services.client_service import *
 from app.services.smartup_service import *
 from bot.models import Bot_user, Cabinet
+
+
+def trim_reconciliation_sheet(file_path: str):
+    workbook = load_workbook(file_path)
+    if workbook.worksheets:
+        worksheet = workbook.active
+        if worksheet.max_column > 7:
+            worksheet.delete_cols(8, worksheet.max_column - 7)
+        workbook.save(file_path)
+    return file_path
 
 
 def get_reconciliation_period(client: Client):
@@ -35,6 +47,7 @@ async def _send_reconciliation_act_in_background(context: CustomContext, chat_id
         start_date=start_date,
         end_date=end_date,
     )
+    trim_reconciliation_sheet(reconciliation_act_file_path)
 
     caption = format_reconciliation_period(context, start_date, end_date)
     with open(reconciliation_act_file_path, 'rb') as file:

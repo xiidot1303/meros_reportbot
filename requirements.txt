@@ -46,6 +46,7 @@ jedi==0.19.1
 kombu==5.3.7
 matplotlib-inline==0.1.7
 multidict==6.1.0
+openpyxl==3.1.5
 oracledb==4.0.2
 packaging==24.0
 parso==0.8.4
