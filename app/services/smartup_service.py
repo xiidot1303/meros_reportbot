@@ -187,7 +187,7 @@ class SmartUpApiClient:
                             ["person_id", "=", [client_id]],
                         ],
                     ],
-                    "sort": ["-expiry_date"],
+                    "sort": ["expiry_date"],
                     "offset": offset,
                     "limit": 200,
                 },
