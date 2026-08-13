@@ -27,7 +27,7 @@ def get_reconciliation_period(client: Client):
         deferment_days = 0
 
     end_date = date.today()
-    start_date = end_date - timedelta(days=deferment_days)
+    start_date = end_date - timedelta(days=deferment_days-1)
     return start_date, end_date
 
 
