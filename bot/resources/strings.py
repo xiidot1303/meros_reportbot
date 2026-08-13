@@ -85,6 +85,16 @@ class Strings:
         "📑 Акт сверки"
     ]
 
+    fetching_reconciliation_act = [
+        "Akt sverka olinmoqda...",
+        "Формируется акт сверки..."
+    ]
+
+    reconciliation_act_period = [
+        "Akt sverka: {start_date} - {end_date}",
+        "Акт сверки: {start_date} - {end_date}"
+    ]
+
     incorrect_date_format = [
         "Kiritilgan sana noto'g'ri formatda. Iltimos, sanani quyidagi formatda kiriting: DD.MM.YYYY",
         "Введенная дата имеет неверный формат. Пожалуйста, введите дату в следующем формате: ДД.ММ.ГГГГ",
@@ -230,6 +240,11 @@ STIR: <code>{tin}</code>
     show_completed_orders = [
         "📦 Yakunlangan buyurtmalarni ko'rsatish",
         "📦 Показать выполненные заказы"
+    ]
+
+    no_orders_found = [
+        "Buyurtmalar topilmadi.",
+        "Заказов не найдено."
     ]
 
     no_debts_found = [

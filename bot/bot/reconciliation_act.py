@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from bot.bot import *
 from app.utils import *
 from app.services.client_service import *
@@ -5,48 +7,77 @@ from app.services.smartup_service import *
 from bot.models import Bot_user, Cabinet
 
 
+def get_reconciliation_period(client: Client):
+    deferment_days = client.deferment_days
+    if deferment_days is None:
+        deferment_days = client.secondary_deferment_days
+    if deferment_days is None:
+        deferment_days = 0
 
-async def get_start_date(update: Update, context: CustomContext):
-    try:
-        start_date = datetime.strptime(update.effective_message.text, "%d.%m.%Y")
-    except ValueError:
-        text = context.words.incorrect_date_format
-        await update.effective_message.reply_text(text) 
-        return
-    
-    context.user_data["reconciliation_act_start_date"] = update.effective_message.text
+    end_date = date.today()
+    start_date = end_date - timedelta(days=deferment_days)
+    return start_date, end_date
 
-    text = context.words.enter_end_date
-    # # remove inline buttons from current message
-    # await update.callback_query.edit_message_reply_markup(reply_markup=None)
-    await update.effective_message.reply_text(
-        text=text,
-        reply_markup = await main_menu_keyboard(context)
+
+def format_reconciliation_period(context: CustomContext, start_date: date, end_date: date) -> str:
+    return context.words.reconciliation_act_period.format(
+        start_date=start_date.strftime('%d.%m.%Y'),
+        end_date=end_date.strftime('%d.%m.%Y'),
     )
-    return GET_RECONCILIATION_END_DATE
 
 
-async def get_end_date(update: Update, context: CustomContext):
-    try:
-        end_date = datetime.strptime(update.effective_message.text, "%d.%m.%Y")
-    except ValueError:
-        text = context.words.incorrect_date_format
-        await update.effective_message.reply_text(text) 
-        return
-    
-    start_date_t = context.user_data["reconciliation_act_start_date"]
-    start_date = datetime.strptime(start_date_t, "%d.%m.%Y")
+async def _send_reconciliation_act_in_background(context: CustomContext, chat_id: int, client_external_id: str, start_date: date, end_date: date):
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
 
-    # get current cabinet
+    smartup_client = SmartUpApiClient(ApiMethods.reconciliation_act_report)
+    reconciliation_act_file_path = smartup_client.reconciliation_act_report(
+        client_id=client_external_id,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    caption = format_reconciliation_period(context, start_date, end_date)
+    with open(reconciliation_act_file_path, 'rb') as file:
+        await context.bot.send_document(
+            chat_id=chat_id,
+            document=file,
+            caption=caption,
+            reply_markup=await main_menu_keyboard(context),
+        )
+
+
+async def send_reconciliation_act(update: Update, context: CustomContext):
+    if update.callback_query:
+        await update.callback_query.edit_message_reply_markup(None)
+
     bot_user: Bot_user = await get_object_by_update(update)
     cabinet: Cabinet = await bot_user.get_active_cabinet
     client: Client = await cabinet.get_client
-    smartup_client = SmartUpApiClient(ApiMethods.reconciliation_act_report)
-    reconciliation_act_file_path = smartup_client.reconciliation_act_report(
-        client_id=client.external_id,
-        start_date=start_date, 
-        end_date=end_date
+
+    start_date, end_date = get_reconciliation_period(client)
+
+    context.application.create_task(
+        _send_reconciliation_act_in_background(
+            context=context,
+            chat_id=update.effective_chat.id,
+            client_external_id=client.external_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
     )
-    await update.effective_message.reply_document(
-        open(reconciliation_act_file_path, 'rb')
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=context.words.fetching_reconciliation_act
     )
+    # send chat action
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+    return ConversationHandler.END
+
+
+async def get_start_date(update: Update, context: CustomContext):
+    return await send_reconciliation_act(update, context)
+
+
+async def get_end_date(update: Update, context: CustomContext):
+    return await send_reconciliation_act(update, context)

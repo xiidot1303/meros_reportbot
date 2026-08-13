@@ -4,8 +4,12 @@ from app.utils import format_number
 
 
 async def order_history_string(context: CustomContext, client: Client):
+    orders = Order.objects.filter(client=client)
+    if not await orders.aexists():
+        return context.words.no_orders_found
+
     result = ""
-    async for order in Order.objects.filter(client=client):
+    async for order in orders:
         text = (
             f"{context.words.order_no} {order.deal_id}"
             f"{context.words.order_history_info}".format(
@@ -25,6 +29,9 @@ async def order_history_string(context: CustomContext, client: Client):
 
 
 async def completed_orders_history_string(context: CustomContext, orders):
+    if not orders:
+        return context.words.no_orders_found
+
     result = ""
     for order in orders:
         text = (

@@ -29,11 +29,14 @@ async def main_menu(update: Update, context: CustomContext):
         [InlineKeyboardButton(text=context.words.switch_cabinet, callback_data="switch_cabinet")],
     ]
     if update.callback_query:
-        await update.callback_query.edit_message_text(
-            context.words.main_menu,
-            reply_markup=InlineKeyboardMarkup(inline_keyboards),
-        )
-        return ConversationHandler.END
+        if update.effective_message.text:
+            await update.callback_query.edit_message_text(
+                context.words.main_menu,
+                reply_markup=InlineKeyboardMarkup(inline_keyboards),
+            )
+            return ConversationHandler.END
+        else:
+            await update.callback_query.edit_message_reply_markup()
     await bot.send_message(
         update.effective_chat.id,
         context.words.main_menu,

@@ -43,9 +43,8 @@ async def start(update: Update, context: CustomContext):
 
 
 async def reconciliation_act(update: Update, context: CustomContext):
-    text = context.words.enter_start_date
-    await update.callback_query.edit_message_text(text, reply_markup=await main_menu_keyboard(context))
-    return GET_RECONCILIATION_START_DATE
+    from bot.bot.reconciliation_act import send_reconciliation_act
+    return await send_reconciliation_act(update, context)
 
 
 async def switch_cabinet(update: Update, context: CustomContext):
