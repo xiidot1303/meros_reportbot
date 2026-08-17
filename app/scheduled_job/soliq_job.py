@@ -126,7 +126,7 @@ def _notify_reminder(client, texture):
 
 def sync_facturas_for_active_cabinets():
     clients = []
-    for cabinet in Cabinet.objects.filter(is_active=True).select_related("client"):
+    for cabinet in Cabinet.objects.filter(is_active=True, client__tin__isnull=False).select_related("client"):
         client = cabinet.client
         if client and client.tin and client not in clients:
             clients.append(client)
