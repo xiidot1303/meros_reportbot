@@ -165,6 +165,39 @@ def soliqRequest(path, options=None):
     return {}
 
 
+PENDING_DOC_STATUS = "header_receive,pending"
+
+
+def fetch_pending_documents(client, limit=100):
+    """Fetch the client's unaccepted (pending) factura documents from Soliq.
+
+    The request is filtered server-side to ``header_receive,pending``, so the
+    response only ever contains documents the client has not accepted yet.
+    """
+    if not client or not client.tin:
+        return []
+
+    response = soliqRequest(
+        "/api/v3/lists",
+        {
+            "method": "get",
+            "params": [
+                ("path", "sent"),
+                ("offset", 0),
+                ("limit", limit),
+                ("docStatus", ""),
+                ("folderId", 0),
+                ("docType", "factura"),
+                ("tin", client.tin),
+                ("docStatus", PENDING_DOC_STATUS),
+            ],
+        },
+    )
+    if not isinstance(response, dict):
+        return []
+    return response.get("data", {}).get("documents", [])
+
+
 def download_factura_pdf(doc_id):
     """Download the PDF file for a factura document from Soliq."""
     if not doc_id:

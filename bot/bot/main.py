@@ -9,6 +9,7 @@ from app.models import Client
 from bot.bot.cabinet import _to_the_selecting_cabinet
 from bot.bot.debts import _client_debts
 from bot.bot.orders import _orders_list
+from bot.bot.facturas import _client_facturas
 
 
 async def start(update: Update, context: CustomContext):
@@ -57,6 +58,10 @@ async def orders_history(update: Update, context: CustomContext):
 
 async def client_debts(update: Update, context: CustomContext):
     return await _client_debts(update, context)
+
+
+async def client_facturas(update: Update, context: CustomContext):
+    return await _client_facturas(update, context)
 
 
 async def newsletter_update(update: NewsletterUpdate, context: CustomContext):

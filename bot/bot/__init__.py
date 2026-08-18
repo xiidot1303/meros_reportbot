@@ -26,6 +26,7 @@ async def main_menu(update: Update, context: CustomContext):
         [InlineKeyboardButton(text=context.words.reconciliation_act, callback_data="reconciliation_act")],
         [InlineKeyboardButton(text=context.words.order_history, callback_data="order_history")],
         [InlineKeyboardButton(text=context.words.client_debts, callback_data="client_debts")],
+        [InlineKeyboardButton(text=context.words.facturas, callback_data="facturas")],
         [InlineKeyboardButton(text=context.words.switch_cabinet, callback_data="switch_cabinet")],
     ]
     if update.callback_query:

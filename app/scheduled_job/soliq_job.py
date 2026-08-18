@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from app.models import Texture
 from app.services.notification_service import send_newsletter, send_newsletter_with_document
-from app.services.soliq_service import soliqRequest, download_factura_pdf
+from app.services.soliq_service import download_factura_pdf, fetch_pending_documents
 from bot.models import Cabinet
 from bot.resources.strings import Strings
 
@@ -37,31 +37,6 @@ def _send_to_cabinet_users(client, message, lang=None):
         if not bot_user or not bot_user.user_id:
             continue
         send_newsletter(bot_user.user_id, message if lang is None else message)
-
-
-def _fetch_documents_for_client(client):
-    if not client or not client.tin:
-        return []
-
-    response = soliqRequest(
-        "/api/v3/lists",
-        {
-            "method": "get",
-            "params": [
-                ("path", "sent"),
-                ("offset", 0),
-                ("limit", 100),
-                ("docStatus", ""),
-                ("folderId", 0),
-                ("docType", "factura"),
-                ("tin", client.tin),
-                ("docStatus", "header_receive,pending"),
-            ],
-        },
-    )
-    if not isinstance(response, dict):
-        return []
-    return response.get("data", {}).get("documents", [])
 
 
 def _notify_new_factura(client, texture):
@@ -120,7 +95,7 @@ def sync_facturas_for_active_cabinets():
             clients.append(client)
 
     for client in clients:
-        documents = _fetch_documents_for_client(client)
+        documents = fetch_pending_documents(client)
         for document in documents:
             texture, created = Texture.save_or_update_from_payload(document, client=client)
             if created:

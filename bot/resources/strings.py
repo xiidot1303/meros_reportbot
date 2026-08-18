@@ -166,6 +166,46 @@ STIR: <code>{tin}</code>
 """
     ]
 
+    facturas = [
+        "\U0001F4C4 Fakturalar",
+        "\U0001F4C4 Счет-фактуры"
+    ]
+
+    facturas_loading = [
+        "Fakturalar yuklanmoqda...",
+        "Счет-фактуры загружаются..."
+    ]
+
+    no_facturas_found = [
+        "Qabul qilinmagan fakturalar topilmadi.",
+        "Непринятых счет-фактур не найдено."
+    ]
+
+    facturas_found = [
+        "Sizda {count} ta qabul qilinmagan faktura bor.",
+        "У вас {count} непринятых счет-фактур."
+    ]
+
+    factura_document = [
+"""\U0001F4C4 <b>Faktura</b>
+<b>№:</b> <code>{doc_no}</code>
+<b>Sana:</b> <code>{doc_date}</code>"""
+,
+"""\U0001F4C4 <b>Счет-фактура</b>
+<b>№:</b> <code>{doc_no}</code>
+<b>Дата:</b> <code>{doc_date}</code>"""
+    ]
+
+    factura_download_failed = [
+        "Ushbu fakturani yuklab bo'lmadi: {doc_no}",
+        "Не удалось загрузить счет-фактуру: {doc_no}"
+    ]
+
+    facturas_error = [
+        "Fakturalarni olishda xatolik yuz berdi. Iltimos, keyinroq urinib ko'ring.",
+        "Произошла ошибка при получении счет-фактур. Пожалуйста, попробуйте позже."
+    ]
+
     factura_reminder = [
 """⚠️ <b>Faktura {days} kun davomida qabul qilinmagan.</b>
 <b>№:</b> <code>{doc_no}</code>
