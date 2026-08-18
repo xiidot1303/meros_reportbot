@@ -22,3 +22,4 @@ app/static/assets/*
 enter_server.sh
 .github
 AGENTS.md
+CLAUDE.md
