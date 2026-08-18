@@ -154,6 +154,28 @@ STIR: <code>{tin}</code>
         "<b>🔄 СУММА ИЗМЕНИЛАСЬ!</b>"
     ]
 
+    factura_new = [
+"""📄 <b>Yangi factura qabul qilindi!</b>
+<b>№:</b> <code>{doc_no}</code>
+<b>Sana:</b> <code>{doc_date}</code>
+"""
+,
+"""📄 <b>Получена новая фактура!</b>
+<b>№:</b> <code>{doc_no}</code>
+<b>Дата:</b> <code>{doc_date}</code>
+"""
+    ]
+
+    factura_reminder = [
+"""⚠️ <b>Faktura {days} kun davomida qabul qilinmagan.</b>
+<b>№:</b> <code>{doc_no}</code>
+<b>Sana:</b> <code>{doc_date}</code>"""
+,
+"""⚠️ <b>Счет-фактура не принята уже {days} дней.</b>
+<b>№:</b> <code>{doc_no}</code>
+<b>Дата:</b> <code>{doc_date}</code>"""
+    ]
+
     send_phone_number = [
         "🧐 Ushbu telefon raqam orqali hech qanday ma'lumot topilmadi. Ro'yxatdan o'tgan telefon raqamni yozib qoldiring" \
             "\n\n<i>991234567 formatida</i>",

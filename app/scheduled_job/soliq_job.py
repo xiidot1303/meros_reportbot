@@ -6,6 +6,7 @@ from app.models import Texture
 from app.services.notification_service import send_newsletter, send_newsletter_with_document
 from app.services.soliq_service import soliqRequest, download_factura_pdf
 from bot.models import Cabinet
+from bot.resources.strings import Strings
 
 
 def _format_amount(value):
@@ -14,32 +15,19 @@ def _format_amount(value):
     return format(float(value), ".2f")
 
 
-def _client_factura_message(client, texture, lang=0):
-    if lang == 0:
-        return (
-            f"<b>📄 Yangi factura qabul qilindi!</b>\n"
-            f"<b>№:</b> <code>{texture.doc_no or texture.doc_id}</code>\n"
-            f"<b>Sana:</b> <code>{texture.doc_date}</code>\n"
-        )
-    return (
-        f"<b>📄 Получена новая фактура!</b>\n"
-        f"<b>№:</b> <code>{texture.doc_no or texture.doc_id}</code>\n"
-        f"<b>Дата:</b> <code>{texture.doc_date}</code>\n"
+def _client_factura_message(client, texture, user_id):
+    return Strings(user_id=user_id).factura_new.format(
+        doc_no=texture.doc_no or texture.doc_id,
+        doc_date=texture.doc_date,
     )
 
 
-def _client_factura_reminder(client, texture, lang=0):
+def _client_factura_reminder(client, texture, user_id):
     days = (timezone.now().date() - texture.doc_date).days if texture.doc_date else 0
-    if lang == 0:
-        return (
-            f"⚠️ <b>Faktura {days} kun davomida qabul qilinmagan.</b>\n"
-            f"<b>№:</b> <code>{texture.doc_no or texture.doc_id}</code>\n"
-            f"<b>Sana:</b> <code>{texture.doc_date}</code>"
-        )
-    return (
-        f"⚠️ <b>Счет-фактура не принята уже {days} дней.</b>\n"
-        f"<b>№:</b> <code>{texture.doc_no or texture.doc_id}</code>\n"
-        f"<b>Дата:</b> <code>{texture.doc_date}</code>"
+    return Strings(user_id=user_id).factura_reminder.format(
+        days=days,
+        doc_no=texture.doc_no or texture.doc_id,
+        doc_date=texture.doc_date,
     )
 
 
@@ -82,7 +70,7 @@ def _notify_new_factura(client, texture):
     for cabinet in Cabinet.objects.filter(client=client, is_active=True).select_related("bot_user"):
         bot_user = cabinet.bot_user
         if bot_user and bot_user.user_id:
-            message = _client_factura_message(client, texture, lang=bot_user.lang or 0)
+            message = _client_factura_message(client, texture, bot_user.user_id)
             if pdf_bytes:
                 send_newsletter_with_document(
                     bot_user.user_id, 
@@ -109,7 +97,7 @@ def _notify_reminder(client, texture):
     for cabinet in Cabinet.objects.filter(client=client, is_active=True).select_related("bot_user"):
         bot_user = cabinet.bot_user
         if bot_user and bot_user.user_id:
-            message = _client_factura_reminder(client, texture, lang=bot_user.lang or 0)
+            message = _client_factura_reminder(client, texture, bot_user.user_id)
             if pdf_bytes:
                 send_newsletter_with_document(
                     bot_user.user_id, 
