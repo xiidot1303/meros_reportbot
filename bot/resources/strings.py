@@ -207,11 +207,11 @@ STIR: <code>{tin}</code>
     ]
 
     factura_reminder = [
-"""⚠️ <b>Faktura {days} kun davomida qabul qilinmagan.</b>
+"""⚠️ <b>Elektron faktura {days} kun davomida qabul qilinmagan.</b>
 <b>№:</b> <code>{doc_no}</code>
 <b>Sana:</b> <code>{doc_date}</code>"""
 ,
-"""⚠️ <b>Счет-фактура не принята уже {days} дней.</b>
+"""⚠️ <b>Электронная счет-фактура не принята уже {days} дней.</b>
 <b>№:</b> <code>{doc_no}</code>
 <b>Дата:</b> <code>{doc_date}</code>"""
     ]
