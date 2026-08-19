@@ -151,7 +151,8 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-# API docs and other login-gated pages send anonymous users to the admin login
+# Default for @login_required views. The API docs do NOT use this — they have
+# their own separate login at /api/login/ (see app/utils/docs_auth.py).
 LOGIN_URL = "/xiidot1303/login/"
 
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
