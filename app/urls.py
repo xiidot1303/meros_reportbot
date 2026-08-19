@@ -10,6 +10,7 @@ from app.views import (
     main
 )
 from app.views.payment import PaymentReceiveView
+from app.views.transport import OrderTransportView
 
 urlpatterns = [
     path('', main.main),
@@ -23,6 +24,7 @@ urlpatterns = [
 
     # payments API
     path('api/payments/', PaymentReceiveView.as_view()),
+    path('api/order-transport/', OrderTransportView.as_view()),
 
     # files
     re_path(r'^files/(?P<path>.*)$', main.get_file),

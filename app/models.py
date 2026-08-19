@@ -126,3 +126,31 @@ class Texture(models.Model):
 
         texture, created = cls.objects.get_or_create(doc_id=doc_id, defaults=defaults)
         return texture, created
+
+
+class OrderTransport(models.Model):
+    order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.CASCADE, related_name="transports", verbose_name="Заказ")
+    order_id_external = models.CharField(max_length=64, db_index=True, null=True, blank=True, verbose_name="ID заказа")
+    car_model = models.CharField(max_length=128, null=True, blank=True, verbose_name="Модель автомобиля")
+    car_brand = models.CharField(max_length=128, null=True, blank=True, verbose_name="Марка автомобиля")
+    car_autonum = models.CharField(max_length=32, null=True, blank=True, db_index=True, verbose_name="Гос. номер")
+    firstname = models.CharField(max_length=128, null=True, blank=True, verbose_name="Имя водителя")
+    lastname = models.CharField(max_length=128, null=True, blank=True, verbose_name="Фамилия водителя")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+
+    class Meta:
+        verbose_name = "Транспорт заказа"
+        verbose_name_plural = "Транспорт заказов"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.car_autonum or '—'} ({self.order_id_external})"
+
+    @property
+    def driver_name(self):
+        return " ".join(filter(None, [self.firstname, self.lastname])) or None
+
+    @property
+    def car_name(self):
+        return " ".join(filter(None, [self.car_brand, self.car_model])) or None
