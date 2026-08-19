@@ -72,3 +72,29 @@ class Message(models.Model):
     class Meta:
         verbose_name = "Сообщение"
         verbose_name_plural = "Сообщения"
+
+class Feedback(models.Model):
+    bot_user = models.ForeignKey('Bot_user', null=True, blank=True, on_delete=models.CASCADE, verbose_name='Пользователь бота')
+    client = models.ForeignKey('app.Client', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Клиент')
+    ttn_number = models.CharField(max_length=64, db_index=True, verbose_name='Номер ТТН')
+    text = models.TextField(verbose_name='Текст обращения')
+    answer = models.TextField(null=True, blank=True, verbose_name='Ответ администратора')
+    answer_file_id = models.CharField(max_length=256, null=True, blank=True, verbose_name='File ID вложения ответа')
+    answer_file_type = models.CharField(max_length=16, null=True, blank=True, verbose_name='Тип вложения ответа')
+    answered_by = models.BigIntegerField(null=True, blank=True, verbose_name='Telegram ID администратора')
+    answered_by_name = models.CharField(max_length=256, null=True, blank=True, verbose_name='Администратор')
+    answered_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата ответа')
+    admin_message_id = models.BigIntegerField(null=True, blank=True, verbose_name='ID сообщения в группе админов')
+    date = models.DateTimeField(db_index=True, null=True, auto_now_add=True, blank=True, verbose_name='Дата обращения')
+
+    class Meta:
+        verbose_name = "Обращение"
+        verbose_name_plural = "Обращения"
+        ordering = ['-date']
+
+    def __str__(self) -> str:
+        return f"ТТН {self.ttn_number}"
+
+    @property
+    def is_answered(self):
+        return bool(self.answer or self.answer_file_id)

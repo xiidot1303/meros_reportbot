@@ -81,3 +81,12 @@ class MesageAdmin(admin.ModelAdmin):
 admin.site.register(Bot_user, Bot_userAdmin)
 admin.site.register(Message, MesageAdmin)
 admin.site.register(Cabinet, CabinetAdmin)
+
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ('ttn_number', 'client', 'bot_user', 'is_answered', 'date', 'answered_at')
+    search_fields = ('ttn_number', 'text', 'answer', 'client__name')
+    list_filter = ('date', 'answered_at')
+    readonly_fields = ('date', 'answered_at', 'answered_by', 'answered_by_name',
+                       'answer_file_id', 'answer_file_type', 'admin_message_id')

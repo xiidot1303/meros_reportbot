@@ -341,6 +341,42 @@ STIR: <code>{tin}</code>
 <b>Назначение платежа:</b> <code>{purpose}</code>"""
     ]
 
+    feedback = [
+        "\U0001F4DD Murojaat yuborish",
+        "\U0001F4DD Оставить обращение"
+    ]
+
+    feedback_sent = [
+"""\u2705 <b>Murojaatingiz yuborildi!</b>
+<b>TTN raqami:</b> <code>{ttn_number}</code>
+
+Tez orada javob beramiz."""
+,
+"""\u2705 <b>Ваше обращение отправлено!</b>
+<b>Номер ТТН:</b> <code>{ttn_number}</code>
+
+Мы ответим вам в ближайшее время."""
+    ]
+
+    feedback_answer = [
+"""\U0001F4AC <b>Murojaatingizga javob berildi!</b>
+<b>TTN raqami:</b> <code>{ttn_number}</code>
+
+<b>Javob:</b>
+{answer}"""
+,
+"""\U0001F4AC <b>На ваше обращение получен ответ!</b>
+<b>Номер ТТН:</b> <code>{ttn_number}</code>
+
+<b>Ответ:</b>
+{answer}"""
+    ]
+
+    feedback_error = [
+        "Murojaatni yuborishda xatolik yuz berdi. Iltimos, keyinroq urinib ko'ring.",
+        "Произошла ошибка при отправке обращения. Пожалуйста, попробуйте позже."
+    ]
+
     _ = [
         "",
         ""

@@ -12,7 +12,7 @@ from telegram.ext import (
 from bot.resources.conversationList import *
 
 from bot.bot import (
-    main, login, reconciliation_act, cabinet, orders, facturas
+    main, login, reconciliation_act, cabinet, orders, facturas, feedback
 )
 
 exceptions_for_filter_text = (~filters.COMMAND) & (
@@ -193,6 +193,13 @@ facturas_handler = ConversationHandler(
 )
 
 
+# admins answer client feedback by replying to the group message with "@@@"
+admin_feedback_reply_handler = MessageHandler(
+    filters.ChatType.GROUPS & filters.REPLY & (~filters.COMMAND),
+    feedback.admin_group_reply,
+)
+
+
 handlers = [
     login_handler,
     reconciliation_act_handler,
@@ -201,5 +208,7 @@ handlers = [
     debts_handler,
     facturas_handler,
 
-    TypeHandler(type=NewsletterUpdate, callback=main.newsletter_update)
+    TypeHandler(type=NewsletterUpdate, callback=main.newsletter_update),
+
+    admin_feedback_reply_handler,
 ]

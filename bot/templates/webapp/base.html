@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>{% block title %}{% endblock %}</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --text: var(--tg-theme-text-color, #000000);
+    --hint: var(--tg-theme-hint-color, #999999);
+    --link: var(--tg-theme-link-color, #2481cc);
+    --button: var(--tg-theme-button-color, #2481cc);
+    --button-text: var(--tg-theme-button-text-color, #ffffff);
+    --secondary-bg: var(--tg-theme-secondary-bg-color, #f1f1f1);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: var(--hint); font-size: 14px; margin: 0 0 20px; }
+  label { display: block; font-size: 14px; margin-bottom: 6px; font-weight: 500; }
+  input[type=text], textarea {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--secondary-bg);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    outline: none;
+  }
+  input[type=text]:focus, textarea:focus { border-color: var(--link); }
+  textarea { min-height: 140px; resize: vertical; }
+  .field { margin-bottom: 18px; }
+  .error { color: #e53935; font-size: 13px; margin-top: 6px; display: none; }
+  .card {
+    background: var(--secondary-bg);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 18px;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .card b { display: block; margin-bottom: 4px; font-size: 13px; color: var(--hint); }
+  button.submit {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--button-text);
+    background: var(--button);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  button.submit[disabled] { opacity: .6; cursor: default; }
+</style>
+</head>
+<body>
+{% block content %}{% endblock %}
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  async function submitForm(payload, button) {
+    button.disabled = true;
+    try {
+      const response = await fetch(window.location.pathname, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify(Object.assign({ _auth: tg.initData }, payload)),
+      });
+      const data = await response.json();
+      if (data.status !== 'success') {
+        throw new Error(data.message || 'error');
+      }
+      tg.close();
+    } catch (err) {
+      button.disabled = false;
+      tg.showAlert('{{ error_text|escapejs }}');
+    }
+  }
+</script>
+{% block script %}{% endblock %}
+</body>
+</html>

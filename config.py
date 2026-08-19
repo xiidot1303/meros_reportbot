@@ -39,3 +39,6 @@ ORACLE_PORT = os.environ.get("ORACLE_PORT")
 ORACLE_SERVICE_NAME = os.environ.get("ORACLE_SERVICE_NAME")
 ORACLE_USER = os.environ.get("ORACLE_USER")
 ORACLE_PASSWORD = os.environ.get("ORACLE_PASSWORD")
+
+# Telegram admin group for client feedback
+ADMIN_GROUP_ID = int(os.environ.get("ADMIN_GROUP_ID") or 0)

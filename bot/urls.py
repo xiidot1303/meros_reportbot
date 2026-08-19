@@ -5,10 +5,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from config import DEBUG
 from bot.views.newsletter import NewsletterView
+from bot.views.feedback import FeedbackFormView
 
 urlpatterns = [
     path("webhook", botwebhook.BotWebhookView.as_view()),
     path('send-newsletter/', NewsletterView.as_view()),
+
+    # feedback web app
+    path('webapp/feedback/', FeedbackFormView.as_view()),
 
 ]
 
