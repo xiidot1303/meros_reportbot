@@ -36,9 +36,10 @@ def handle_orders_change(orders_list: list):
             if order_obj.status != status:
                 order_obj.status = status
                 have_to_update = True
-                # notify about status change
-                notification_service.order_status_change_notify.delay(
-                    order_obj.id)
+                # notify about status change if status is in
+                if status in ["B#W", "B#S", "B#V", "A"]:
+                    notification_service.order_status_change_notify.delay(
+                        order_obj.id)
 
             # check order price change
             current_total = Decimal(str(order_obj.total_amount)) if order_obj.total_amount is not None else None
