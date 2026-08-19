@@ -329,6 +329,18 @@ STIR: <code>{tin}</code>
         "Задолженности загружаются..."
     ]
 
+    payment_received = [
+"""\U0001F4B0 <b>To'lovingiz qabul qilindi!</b>
+<b>Summa:</b> <code>{amount}</code>
+<b>Sana:</b> <code>{datetime}</code>
+<b>To'lov maqsadi:</b> <code>{purpose}</code>"""
+,
+"""\U0001F4B0 <b>Ваш платёж получен!</b>
+<b>Сумма:</b> <code>{amount}</code>
+<b>Дата:</b> <code>{datetime}</code>
+<b>Назначение платежа:</b> <code>{purpose}</code>"""
+    ]
+
     _ = [
         "",
         ""

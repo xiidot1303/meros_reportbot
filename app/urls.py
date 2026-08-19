@@ -9,6 +9,7 @@ from django.contrib.auth.views import (
 from app.views import (
     main
 )
+from app.views.payment import PaymentReceiveView
 
 urlpatterns = [
     path('', main.main),
@@ -19,6 +20,9 @@ urlpatterns = [
     path('changepassword/done/', PasswordChangeDoneView.as_view(
         template_name = 'registration/afterchanging.html'), name='password_change_done'),
     path('logout/', LogoutView.as_view(), name='logout'),
+
+    # payments API
+    path('api/payments/', PaymentReceiveView.as_view()),
 
     # files
     re_path(r'^files/(?P<path>.*)$', main.get_file),
