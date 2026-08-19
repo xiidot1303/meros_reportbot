@@ -11,6 +11,7 @@ from app.views import (
 )
 from app.views.payment import PaymentReceiveView
 from app.views.transport import OrderTransportView
+from app.views.docs import OpenAPISchemaView, StoplightDocsView, SwaggerUIView
 
 urlpatterns = [
     path('', main.main),
@@ -25,6 +26,11 @@ urlpatterns = [
     # payments API
     path('api/payments/', PaymentReceiveView.as_view()),
     path('api/order-transport/', OrderTransportView.as_view()),
+
+    # API documentation (login required)
+    path('api/schema/', OpenAPISchemaView.as_view(), name='openapi-schema'),
+    path('api/docs/', SwaggerUIView.as_view(), name='api-docs'),
+    path('api/reference/', StoplightDocsView.as_view(), name='api-reference'),
 
     # files
     re_path(r'^files/(?P<path>.*)$', main.get_file),

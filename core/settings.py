@@ -151,6 +151,9 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+# API docs and other login-gated pages send anonymous users to the admin login
+LOGIN_URL = "/xiidot1303/login/"
+
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 if DEBUG:
     STATIC_URL = "/static/"
