@@ -41,16 +41,16 @@ def handle_orders_change(orders_list: list):
                     notification_service.order_status_change_notify.delay(
                         order_obj.id)
 
-            # check order price change
-            current_total = Decimal(str(order_obj.total_amount)) if order_obj.total_amount is not None else None
-            incoming_total = Decimal(str(total_amount)) if total_amount is not None else None
-            if current_total != incoming_total:
-                old_price = order_obj.total_amount
-                order_obj.total_amount = total_amount
-                have_to_update = True
-                # notify about price change
-                notification_service.order_price_change_notify.delay(
-                    order_obj.id, old_price, total_amount)
+            # # check order price change
+            # current_total = Decimal(str(order_obj.total_amount)) if order_obj.total_amount is not None else None
+            # incoming_total = Decimal(str(total_amount)) if total_amount is not None else None
+            # if current_total != incoming_total:
+            #     old_price = order_obj.total_amount
+            #     order_obj.total_amount = total_amount
+            #     have_to_update = True
+            #     # notify about price change
+            #     notification_service.order_price_change_notify.delay(
+            #         order_obj.id, old_price, total_amount)
 
             if have_to_update:
                 to_update.append(order_obj)
