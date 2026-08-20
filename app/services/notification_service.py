@@ -72,9 +72,9 @@ def order_status_change_notify(order_id=None, order_deal_id=None):
 
 
 @app.task(name="app.services.notification_service.order_price_change_notify")
-def order_price_change_notify(order_id, old_price):
+def order_price_change_notify(order_id, old_price, new_price):
     order: Order = Order.objects.get(pk=order_id)
     for cabinet in Cabinet.objects.filter(client=order.client):
         bot_user: Bot_user = cabinet.bot_user
-        text = order_price_change_string(order, bot_user, old_price)
+        text = order_price_change_string(order, bot_user, old_price, new_price)
         send_newsletter(bot_user.user_id, text)

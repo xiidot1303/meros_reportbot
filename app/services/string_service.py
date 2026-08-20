@@ -23,7 +23,7 @@ def order_status_change_string(order: Order, bot_user: Bot_user = None) -> str:
     
     return text
 
-def order_price_change_string(order: Order, bot_user: Bot_user, old_price):
+def order_price_change_string(order: Order, bot_user: Bot_user, old_price, new_price):
     if bot_user:
         lang = bot_user.lang
     else:
@@ -36,7 +36,7 @@ def order_price_change_string(order: Order, bot_user: Bot_user, old_price):
         f"{Strings.order_info[lang]}".format(
             deal_datetime = order.deal_datetime.strftime("%d.%m.%Y %H:%M:%S"),
             manager = order.manager,
-            total_amount =  f"{format_number(old_price)} -> {format_number(order.total_amount)}",
+            total_amount =  f"{format_number(old_price)} -> {format_number(new_price)}",
             tin = order.tin
         )
         )

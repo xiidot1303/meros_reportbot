@@ -50,7 +50,7 @@ def handle_orders_change(orders_list: list):
                 have_to_update = True
                 # notify about price change
                 notification_service.order_price_change_notify.delay(
-                    order_obj.id, old_price)
+                    order_obj.id, old_price, total_amount)
 
             if have_to_update:
                 to_update.append(order_obj)
