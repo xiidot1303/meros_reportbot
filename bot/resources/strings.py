@@ -160,6 +160,7 @@ STIR: <code>{tin}</code>
 <b>Avtomobil:</b> <code>{car_name}</code>
 <b>Davlat raqami:</b> <code>{car_autonum}</code>
 <b>Haydovchi:</b> <code>{driver_name}</code>
+<b>Telefon raqami:</b> <code>{phone_number}</code>
 """
 ,
 """🚚 <b>Груз погружен в машину и в пути!</b>
@@ -167,6 +168,7 @@ STIR: <code>{tin}</code>
 <b>Автомобиль:</b> <code>{car_name}</code>
 <b>Гос. номер:</b> <code>{car_autonum}</code>
 <b>Водитель:</b> <code>{driver_name}</code>
+<b>Номер телефона:</b> <code>{phone_number}</code>
 """
     ]
 

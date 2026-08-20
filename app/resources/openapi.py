@@ -185,6 +185,15 @@ OPENAPI_SPEC = {
                         "description": "Driver's last name.",
                         "examples": ["Каримов"],
                     },
+                    "phone_number": {
+                        "type": ["string", "null"],
+                        "maxLength": 32,
+                        "description": (
+                            "Driver's phone number, stored verbatim with no reformatting "
+                            "or validation — send it in whatever form the client should see."
+                        ),
+                        "examples": ["+998901234567"],
+                    },
                 },
             },
             "OrderTransportResponse": {
@@ -309,6 +318,7 @@ OPENAPI_SPEC = {
                                 "car_autonum": "01A123BC",
                                 "firstname": "Азиз",
                                 "lastname": "Каримов",
+                                "phone_number": "+998901234567",
                             },
                         }
                     },

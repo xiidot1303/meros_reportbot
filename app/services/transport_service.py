@@ -20,7 +20,7 @@ def find_order(order_id):
 
 @notify_on_exception
 def save_order_transport(order_id, car_model=None, car_brand=None, car_autonum=None,
-                         firstname=None, lastname=None):
+                         firstname=None, lastname=None, phone_number=None):
     """Create or update the transport (car + driver) attached to an order.
 
     Keyed on order_id so repeated posts for the same order update the existing
@@ -37,6 +37,7 @@ def save_order_transport(order_id, car_model=None, car_brand=None, car_autonum=N
             "car_autonum": car_autonum,
             "firstname": firstname,
             "lastname": lastname,
+            "phone_number": phone_number,
         },
     )
     return transport, created
