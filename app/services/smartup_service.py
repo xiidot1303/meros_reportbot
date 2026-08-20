@@ -96,7 +96,7 @@ class SmartUpApiClient:
             f.write(response.content)
         return file_path
 
-    def get_orders(self):
+    def get_orders(self, clients_ids):
         result = []
         offset = 0
         while True:
@@ -129,6 +129,7 @@ class SmartUpApiClient:
                                     "MCC_PERSON_CALL_PLANS",
                                 ],
                             ],
+                            ["person_id","=", clients_ids]
                         ],
                     ],
                     "sort": ["-deal_time"],
