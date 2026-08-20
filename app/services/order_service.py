@@ -3,12 +3,14 @@ from decimal import Decimal
 from app.models import Order, Client
 from app.services import *
 from app.services import notification_service
+from app.services.error_service import notify_on_exception
 from django.db import transaction
 from django.db.models import Q
 from asgiref.sync import sync_to_async
 from app.services.smartup_service import SmartUpApiClient, ApiMethods
 
 
+@notify_on_exception
 def handle_orders_change(orders_list: list):
     incoming_ids = [item[0] for item in orders_list]
     existing_orders = Order.objects.filter(deal_id__in=incoming_ids)
@@ -103,6 +105,7 @@ def handle_orders_change(orders_list: list):
 
 
 @sync_to_async
+@notify_on_exception
 def get_archived_orders_by_client(client: Client, offset=0):
     smartup_client = SmartUpApiClient(ApiMethods.archived_orders_list)
     data = smartup_client.get_archived_orders_by_client(

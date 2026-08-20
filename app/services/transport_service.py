@@ -1,4 +1,5 @@
 from app.models import Order, OrderTransport
+from app.services.error_service import notify_on_exception
 
 
 def find_order(order_id):
@@ -17,6 +18,7 @@ def find_order(order_id):
         return None
 
 
+@notify_on_exception
 def save_order_transport(order_id, car_model=None, car_brand=None, car_autonum=None,
                          firstname=None, lastname=None):
     """Create or update the transport (car + driver) attached to an order.

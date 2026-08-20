@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 from app.models import Texture
+from app.services.error_service import notify_on_exception, report_exception
 from app.services.notification_service import send_newsletter, send_newsletter_with_document
 from app.services.soliq_service import download_factura_pdf, fetch_pending_documents
 from bot.models import Cabinet
@@ -87,6 +88,7 @@ def _notify_reminder(client, texture):
     texture.save(update_fields=["last_reminder_sent_at"])
 
 
+@notify_on_exception(reraise=False)
 def sync_facturas_for_active_cabinets():
     clients = []
     for cabinet in Cabinet.objects.filter(is_active=True, client__tin__isnull=False).select_related("client"):
@@ -95,12 +97,24 @@ def sync_facturas_for_active_cabinets():
             clients.append(client)
 
     for client in clients:
-        documents = fetch_pending_documents(client)
-        for document in documents:
-            texture, created = Texture.save_or_update_from_payload(document, client=client)
-            if created:
-                _notify_new_factura(client, texture)
-                continue
+        # one unreachable client must not abort the sync for everyone else
+        try:
+            _sync_client_facturas(client)
+        except Exception as exc:
+            report_exception(
+                exc,
+                "app.scheduled_job.soliq_job.sync_facturas_for_active_cabinets",
+                context={"client": client.name, "tin": client.tin},
+            )
 
-            if texture.doc_date and timezone.now().date() - texture.doc_date >= timedelta(days=5):
-                _notify_reminder(client, texture)
+
+def _sync_client_facturas(client):
+    documents = fetch_pending_documents(client)
+    for document in documents:
+        texture, created = Texture.save_or_update_from_payload(document, client=client)
+        if created:
+            _notify_new_factura(client, texture)
+            continue
+
+        if texture.doc_date and timezone.now().date() - texture.doc_date >= timedelta(days=5):
+            _notify_reminder(client, texture)

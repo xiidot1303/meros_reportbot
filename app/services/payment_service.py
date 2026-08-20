@@ -1,6 +1,7 @@
 from datetime import datetime as dt
 from decimal import Decimal, InvalidOperation
 
+from app.services.error_service import report_exception
 from app.services.notification_service import send_newsletter
 from bot.models import Cabinet
 from bot.resources.strings import Strings
@@ -68,12 +69,20 @@ def notify_payment(tin, amount, datetime_value, purpose):
         bot_user = cabinet.bot_user
         if not bot_user or not bot_user.user_id:
             continue
-        text = Strings(user_id=bot_user.user_id).payment_received.format(
-            amount=format_amount(amount),
-            datetime=format_datetime(datetime_value),
-            purpose=purpose or "-",
-        )
-        send_newsletter(bot_user.user_id, text)
-        notified += 1
+        # one undeliverable user must not stop the rest being notified
+        try:
+            text = Strings(user_id=bot_user.user_id).payment_received.format(
+                amount=format_amount(amount),
+                datetime=format_datetime(datetime_value),
+                purpose=purpose or "-",
+            )
+            send_newsletter(bot_user.user_id, text)
+            notified += 1
+        except Exception as exc:
+            report_exception(
+                exc,
+                "app.services.payment_service.notify_payment",
+                context={"tin": tin, "user_id": bot_user.user_id},
+            )
 
     return notified

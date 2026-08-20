@@ -6,6 +6,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from app.services.transport_service import save_order_transport
+from app.services.error_service import report_exception
 from app.utils.api_auth import authenticate_api_request, unauthorized_response
 
 
@@ -41,14 +42,24 @@ class OrderTransportView(View):
                 {"status": "error", "message": "order_id is required."}, status=400
             )
 
-        transport, created = save_order_transport(
-            order_id=order_id,
-            car_model=_clean(data.get("car_model")),
-            car_brand=_clean(data.get("car_brand")),
-            car_autonum=_clean(data.get("car_autonum")),
-            firstname=_clean(data.get("firstname")),
-            lastname=_clean(data.get("lastname")),
-        )
+        try:
+            transport, created = save_order_transport(
+                order_id=order_id,
+                car_model=_clean(data.get("car_model")),
+                car_brand=_clean(data.get("car_brand")),
+                car_autonum=_clean(data.get("car_autonum")),
+                firstname=_clean(data.get("firstname")),
+                lastname=_clean(data.get("lastname")),
+            )
+        except Exception as exc:
+            report_exception(
+                exc,
+                "app.views.transport.OrderTransportView",
+                context={"order_id": order_id},
+            )
+            return JsonResponse(
+                {"status": "error", "message": "Internal error."}, status=500
+            )
 
         return JsonResponse({
             "status": "success",

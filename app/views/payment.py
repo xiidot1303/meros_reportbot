@@ -6,6 +6,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from app.services.payment_service import notify_payment, parse_amount, parse_datetime
+from app.services.error_service import report_exception
 from app.utils.api_auth import authenticate_api_request, unauthorized_response
 
 
@@ -35,12 +36,22 @@ class PaymentReceiveView(View):
         tin = data.get("tin")
         tin = str(tin).strip() if tin else None
 
-        notified = notify_payment(
-            tin=tin,
-            amount=parse_amount(data.get("amount")),
-            datetime_value=parse_datetime(data.get("datetime")),
-            purpose=data.get("purpose"),
-        )
+        try:
+            notified = notify_payment(
+                tin=tin,
+                amount=parse_amount(data.get("amount")),
+                datetime_value=parse_datetime(data.get("datetime")),
+                purpose=data.get("purpose"),
+            )
+        except Exception as exc:
+            report_exception(
+                exc,
+                "app.views.payment.PaymentReceiveView",
+                context={"doc_id": doc_id, "tin": tin},
+            )
+            return JsonResponse(
+                {"status": "error", "message": "Internal error."}, status=500
+            )
 
         return JsonResponse({
             "status": "success",

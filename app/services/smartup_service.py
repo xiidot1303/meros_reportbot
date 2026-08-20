@@ -1,6 +1,7 @@
 import requests
 
 from app.services import *
+from app.services.error_service import notify_on_exception
 from config import SMARTUP_API_URL, SMARTUP_PASSWORD, SMARTUP_USERNAME
 
 
@@ -20,6 +21,7 @@ class SmartUpApiClient:
         self.username = SMARTUP_USERNAME
         self.password = SMARTUP_PASSWORD
 
+    @notify_on_exception
     def save_report_template(self, deal_id):
         response = requests.post(
             f"{SMARTUP_API_URL}/{ApiMethods.order_report_template}",
@@ -30,6 +32,7 @@ class SmartUpApiClient:
         payload = response.json()
         return payload.get("report_template_id")
 
+    @notify_on_exception
     def download_order_report(self, report_template_id):
         response = requests.get(
             f"{SMARTUP_API_URL}/{ApiMethods.order_report_download}",
@@ -39,6 +42,7 @@ class SmartUpApiClient:
         response.raise_for_status()
         return response.content
 
+    @notify_on_exception
     def get_clients(self):
         result = []
         offset = 0
@@ -71,6 +75,7 @@ class SmartUpApiClient:
                 break
         return result
 
+    @notify_on_exception
     def reconciliation_act_report(self, client_id, start_date: date, end_date: date):
         params = {
             "rt": "xlsx",
@@ -96,6 +101,7 @@ class SmartUpApiClient:
             f.write(response.content)
         return file_path
 
+    @notify_on_exception
     def get_orders(self, clients_ids):
         result = []
         offset = 0
@@ -148,6 +154,7 @@ class SmartUpApiClient:
                 break
         return result
 
+    @notify_on_exception
     def get_archived_orders_by_client(self, client_id, offset=0):
         """Get archived orders list by client. Limit: 10"""
         data = {
@@ -178,6 +185,7 @@ class SmartUpApiClient:
         response = response.json()
         return response.get("data")
 
+    @notify_on_exception
     def get_debts_by_client(self, client_id):
         result = []
         offset = 0

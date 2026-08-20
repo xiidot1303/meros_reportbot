@@ -1,6 +1,7 @@
 import requests
 from django.core.cache import cache
 
+from app.services.error_service import notify_on_exception, report_exception
 from config import SOLIQ_BASE_URL, SOLIQ_PASSWORD, SOLIQ_USERNAME
 
 SOLIQ_TOKEN_CACHE_KEY = "soliq:auth_token"
@@ -46,6 +47,7 @@ def _looks_like_auth_error(response):
     return any(marker in lower_text for marker in auth_markers)
 
 
+@notify_on_exception
 def authenticate(username=None, password=None):
     login_username = username or SOLIQ_USERNAME
     login_password = password or SOLIQ_PASSWORD
@@ -92,6 +94,7 @@ def get_valid_token(force_refresh=False):
     return cached
 
 
+@notify_on_exception
 def soliqRequest(path, options=None):
     options = dict(options or {})
     method = str(options.get("method", "get")).lower()
@@ -168,6 +171,7 @@ def soliqRequest(path, options=None):
 PENDING_DOC_STATUS = "header_receive,pending"
 
 
+@notify_on_exception
 def fetch_pending_documents(client, limit=100):
     """Fetch the client's unaccepted (pending) factura documents from Soliq.
 
@@ -215,6 +219,10 @@ def download_factura_pdf(doc_id):
         if isinstance(response, bytes):
             return response
         return None
-    except Exception as e:
-        print(f"Error downloading Soliq factura PDF for {doc_id}: {e}")
+    except Exception as exc:
+        report_exception(
+            exc,
+            "app.services.soliq_service.download_factura_pdf",
+            context={"doc_id": doc_id},
+        )
         return None

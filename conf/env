@@ -27,3 +27,4 @@ ORACLE_USER=<oracle_user>
 ORACLE_PASSWORD=<oracle_password>
 
 ADMIN_GROUP_ID=<admin_group_id>
+DEVELOPER_USER_ID=<developer_telegram_user_id>
