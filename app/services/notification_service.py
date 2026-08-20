@@ -1,7 +1,7 @@
 import base64
 
 from core.celery import app
-from app.models import Order
+from app.models import Order, OrderTransport
 from app.services.string_service import *
 import requests
 from config import NEWSLETTER_URL
@@ -77,4 +77,18 @@ def order_price_change_notify(order_id, old_price, new_price):
     for cabinet in Cabinet.objects.filter(client=order.client):
         bot_user: Bot_user = cabinet.bot_user
         text = order_price_change_string(order, bot_user, old_price, new_price)
+        send_newsletter(bot_user.user_id, text)
+
+
+@app.task(name="app.services.notification_service.order_transport_notify")
+def order_transport_notify(transport_id):
+    transport: OrderTransport = OrderTransport.objects.filter(pk=transport_id).select_related("order").first()
+    if not transport or not transport.order or not transport.order.client:
+        return
+
+    for cabinet in Cabinet.objects.filter(client=transport.order.client, is_active=True).select_related("bot_user"):
+        bot_user: Bot_user = cabinet.bot_user
+        if not bot_user or not bot_user.user_id:
+            continue
+        text = order_transport_string(transport, bot_user)
         send_newsletter(bot_user.user_id, text)

@@ -1,5 +1,5 @@
 from bot.resources.strings import Strings
-from app.models import Order
+from app.models import Order, OrderTransport
 from bot.models import Bot_user, Cabinet
 from app.services import *
 
@@ -42,3 +42,14 @@ def order_price_change_string(order: Order, bot_user: Bot_user, old_price, new_p
         )
     
     return text
+
+def order_transport_string(transport: OrderTransport, bot_user: Bot_user = None) -> str:
+    """Message for a freshly registered transport — the cargo is loaded and moving."""
+    user_id = bot_user.user_id if bot_user else None
+
+    return Strings(user_id=user_id).order_transport_on_the_way.format(
+        order_no=transport.order.deal_id if transport.order else transport.order_id_external,
+        car_name=transport.car_name or "—",
+        car_autonum=transport.car_autonum or "—",
+        driver_name=transport.driver_name or "—",
+    )

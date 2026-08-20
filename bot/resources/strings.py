@@ -154,6 +154,22 @@ STIR: <code>{tin}</code>
         "<b>🔄 СУММА ИЗМЕНИЛАСЬ!</b>"
     ]
 
+    order_transport_on_the_way = [
+"""🚚 <b>Yuk mashinaga ortildi va yo'lda!</b>
+<b>Buyurtma:</b> <code>{order_no}</code>
+<b>Avtomobil:</b> <code>{car_name}</code>
+<b>Davlat raqami:</b> <code>{car_autonum}</code>
+<b>Haydovchi:</b> <code>{driver_name}</code>
+"""
+,
+"""🚚 <b>Груз погружен в машину и в пути!</b>
+<b>Заказ:</b> <code>{order_no}</code>
+<b>Автомобиль:</b> <code>{car_name}</code>
+<b>Гос. номер:</b> <code>{car_autonum}</code>
+<b>Водитель:</b> <code>{driver_name}</code>
+"""
+    ]
+
     factura_new = [
 """📄 <b>Yangi factura qabul qilindi!</b>
 <b>№:</b> <code>{doc_no}</code>
