@@ -1,4 +1,4 @@
-n = 16
+n = 18
 (
     SELECT_LANG,
     GET_NAME,
@@ -15,5 +15,7 @@ n = 16
     GET_BRANCH,
     SELECT_CABINET,
     LOAD_MORE_ORDERS,
-    FEEDBACK_WEBAPP,
+    GET_FEEDBACK_TTN,
+    GET_FEEDBACK_TEXT,
+    GET_FEEDBACK_FILE,
 ) = range(0, n)

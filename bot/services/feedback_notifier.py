@@ -12,6 +12,27 @@ SENDABLE = ("photo", "video", "document", "audio", "voice",
 CAPTIONLESS = ("video_note", "sticker")
 
 
+async def _send_with_attachment(bot, chat_id, text, file_id, file_type):
+    """Send text plus an optional attachment, and return the message carrying the text.
+
+    The text message is the one admins reply to, so for captionless media
+    (video_note, sticker) the text is sent first and returned.
+    """
+    send = getattr(bot, f"send_{file_type}", None) if file_type in SENDABLE else None
+
+    if not (file_id and send):
+        return await bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.HTML)
+
+    if file_type in CAPTIONLESS:
+        message = await bot.send_message(
+            chat_id=chat_id, text=text, parse_mode=ParseMode.HTML
+        )
+        await send(chat_id, file_id)
+        return message
+
+    return await send(chat_id, file_id, caption=text, parse_mode=ParseMode.HTML)
+
+
 async def notify_new_feedback(feedback: Feedback):
     """Confirm to the client, then post the feedback into the admin group.
     Admins answer by replying to that message with @@@ in the text/caption."""
@@ -31,10 +52,12 @@ async def notify_new_feedback(feedback: Feedback):
         return
 
     text = await sync_to_async(admin_feedback_text)(feedback)
-    message = await application.bot.send_message(
+    message = await _send_with_attachment(
+        bot=application.bot,
         chat_id=ADMIN_GROUP_ID,
         text=text,
-        parse_mode=ParseMode.HTML,
+        file_id=feedback.file_id,
+        file_type=feedback.file_type,
     )
 
     feedback.admin_message_id = message.message_id
@@ -52,22 +75,13 @@ async def send_answer_to_client(feedback: Feedback, bot):
         answer=feedback.answer or "",
     )
 
-    file_id, file_type = feedback.answer_file_id, feedback.answer_file_type
-    send = getattr(bot, f"send_{file_type}", None) if file_type in SENDABLE else None
-
-    if file_id and send:
-        # video_note and sticker take no caption — send the text separately
-        if file_type in CAPTIONLESS:
-            await bot.send_message(
-                chat_id=bot_user.user_id, text=caption, parse_mode=ParseMode.HTML
-            )
-            await send(bot_user.user_id, file_id)
-        else:
-            await send(bot_user.user_id, file_id, caption=caption, parse_mode=ParseMode.HTML)
-    else:
-        await bot.send_message(
-            chat_id=bot_user.user_id, text=caption, parse_mode=ParseMode.HTML
-        )
+    await _send_with_attachment(
+        bot=bot,
+        chat_id=bot_user.user_id,
+        text=caption,
+        file_id=feedback.answer_file_id,
+        file_type=feedback.answer_file_type,
+    )
 
     return True
 
@@ -76,12 +90,23 @@ async def mark_admin_message_answered(feedback: Feedback, bot):
     """Edit the admin-group message so handled feedback is visible at a glance."""
     if not (ADMIN_GROUP_ID and feedback.admin_message_id):
         return
+
+    text = await sync_to_async(admin_answered_text)(feedback)
     try:
         await bot.edit_message_text(
             chat_id=ADMIN_GROUP_ID,
             message_id=feedback.admin_message_id,
-            text=await sync_to_async(admin_answered_text)(feedback),
+            text=text,
             parse_mode=ParseMode.HTML,
         )
     except Exception:
-        pass
+        # the feedback came with a file, so the group message is a caption
+        try:
+            await bot.edit_message_caption(
+                chat_id=ADMIN_GROUP_ID,
+                message_id=feedback.admin_message_id,
+                caption=text,
+                parse_mode=ParseMode.HTML,
+            )
+        except Exception:
+            pass

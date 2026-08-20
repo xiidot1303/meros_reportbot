@@ -2,6 +2,7 @@ import html
 
 from django.utils import timezone
 
+from app.models import Order
 from bot.models import Bot_user, Cabinet, Feedback
 
 
@@ -11,22 +12,27 @@ ADMIN_FEEDBACK_TEXT = """\U0001F4DD <b>Новое обращение от кли
 <b>Телефон:</b> {phone}
 
 <b>Обращение:</b>
-{text}"""
+{text}{attachment}"""
+
+ATTACHMENT_NOTE = "\n\n\U0001F4CE К обращению приложен файл."
 
 ANSWER_MARKER = "@@@"
+
+# Telegram allows at most 50 inline results per answer
+INLINE_RESULT_LIMIT = 50
 
 ADMIN_ANSWERED_TEXT = """✅ <b>Обращение обработано</b>
 <b>Номер ТТН:</b> <code>{ttn_number}</code>
 <b>Клиент:</b> {client}
 
 <b>Обращение:</b>
-{text}
+{text}{attachment}
 
 <b>Ответ ({admin}):</b>
 {answer}"""
 
 
-def create_feedback(user_id, ttn_number, text):
+def create_feedback(user_id, ttn_number, text, file_id=None, file_type=None):
     """Store a client's feedback. Returns the Feedback, or None if the user is unknown."""
     bot_user = Bot_user.objects.filter(user_id=user_id).first()
     if not bot_user:
@@ -41,7 +47,45 @@ def create_feedback(user_id, ttn_number, text):
         client=cabinet.client if cabinet else None,
         ttn_number=ttn_number,
         text=text,
+        file_id=file_id,
+        file_type=file_type,
     )
+
+
+def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT):
+    """Archived ("A") orders of the user's active cabinet, filtered by deal_id.
+
+    Feeds the TTN inline-query search; returns [] when the user has no cabinet.
+    """
+    cabinet = Cabinet.objects.filter(
+        bot_user__user_id=user_id, is_active=True
+    ).select_related("client").first()
+    if not (cabinet and cabinet.client):
+        return []
+
+    orders = Order.objects.filter(client=cabinet.client, status="A")
+    query = (query or "").strip()
+    if query:
+        orders = orders.filter(deal_id__icontains=query)
+
+    return list(orders.order_by("-deal_datetime", "-id")[:limit])
+
+
+def find_client_order(user_id, deal_id):
+    """The archived order with this deal_id belonging to the user's active cabinet."""
+    deal_id = (deal_id or "").strip()
+    if not deal_id:
+        return None
+
+    cabinet = Cabinet.objects.filter(
+        bot_user__user_id=user_id, is_active=True
+    ).select_related("client").first()
+    if not (cabinet and cabinet.client):
+        return None
+
+    return Order.objects.filter(
+        client=cabinet.client, status="A", deal_id=deal_id
+    ).first()
 
 
 def strip_marker(text):
@@ -84,6 +128,7 @@ def admin_feedback_text(feedback: Feedback):
         client=html.escape(feedback.client.name if feedback.client else "—"),
         phone=html.escape(feedback.bot_user.phone or "—") if feedback.bot_user else "—",
         text=html.escape(feedback.text),
+        attachment=ATTACHMENT_NOTE if feedback.file_id else "",
     )
 
 
@@ -95,6 +140,7 @@ def admin_answered_text(feedback: Feedback, admin_name=None):
         ttn_number=html.escape(feedback.ttn_number),
         client=html.escape(feedback.client.name if feedback.client else "—"),
         text=html.escape(feedback.text),
+        attachment=ATTACHMENT_NOTE if feedback.file_id else "",
         admin=html.escape(admin_name or feedback.answered_by_name or "—"),
         answer=html.escape(answer),
     )

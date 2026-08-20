@@ -193,6 +193,58 @@ facturas_handler = ConversationHandler(
 )
 
 
+feedback_handler = ConversationHandler(
+    entry_points=[
+        CallbackQueryHandler(main.feedback, pattern="^feedback$")
+    ],
+    states={
+        GET_FEEDBACK_TTN: [
+            MessageHandler(
+                exceptions_for_filter_text & filters.TEXT,
+                feedback.get_ttn
+            )
+        ],
+        GET_FEEDBACK_TEXT: [
+            MessageHandler(
+                exceptions_for_filter_text & filters.TEXT,
+                feedback.get_text
+            )
+        ],
+        GET_FEEDBACK_FILE: [
+            CallbackQueryHandler(
+                feedback.skip_file,
+                pattern="^feedback_skip_file$"
+            ),
+            MessageHandler(
+                (~filters.COMMAND) & (
+                    filters.PHOTO | filters.VIDEO | filters.Document.ALL
+                    | filters.AUDIO | filters.VOICE | filters.ANIMATION
+                ),
+                feedback.get_file
+            ),
+            MessageHandler(
+                exceptions_for_filter_text & filters.TEXT,
+                feedback.get_file
+            ),
+        ],
+    },
+    fallbacks=[
+        CallbackQueryHandler(
+            callback=main.main_menu,
+            pattern="^main_menu$",
+        ),
+        CommandHandler('start', main.main_menu)
+    ],
+    allow_reentry=True,
+    persistent=True,
+    name="feedback_handler",
+)
+
+
+# the ТТН search behind the feedback form's "find ТТН" button
+feedback_inline_query_handler = InlineQueryHandler(feedback.ttn_inline_query)
+
+
 # admins answer client feedback by replying to the group message with "@@@"
 admin_feedback_reply_handler = MessageHandler(
     filters.ChatType.GROUPS & filters.REPLY & (~filters.COMMAND),
@@ -207,6 +259,9 @@ handlers = [
     orders_handler,
     debts_handler,
     facturas_handler,
+    feedback_handler,
+
+    feedback_inline_query_handler,
 
     TypeHandler(type=NewsletterUpdate, callback=main.newsletter_update),
 

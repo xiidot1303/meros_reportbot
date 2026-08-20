@@ -393,6 +393,73 @@ Tez orada javob beramiz."""
         "Произошла ошибка при отправке обращения. Пожалуйста, попробуйте позже."
     ]
 
+    feedback_ask_ttn = [
+"""\U0001F4C4 <b>Yuk xati raqamini (TTN) tanlang.</b>
+
+Quyidagi tugmani bosing va ro'yxatdan buyurtmangizni tanlang yoki TTN raqamini qo'lda kiriting.""",
+"""\U0001F4C4 <b>Выберите номер товарно-транспортной накладной (ТТН).</b>
+
+Нажмите кнопку ниже и выберите заказ из списка или введите номер ТТН вручную."""
+    ]
+
+    feedback_search_ttn = [
+        "\U0001F50D TTN raqamini qidirish",
+        "\U0001F50D Найти номер ТТН"
+    ]
+
+    feedback_ttn_not_found = [
+        "Bunday TTN raqamiga ega buyurtma topilmadi. Iltimos, qaytadan urinib ko'ring.",
+        "Заказ с таким номером ТТН не найден. Пожалуйста, попробуйте ещё раз."
+    ]
+
+    feedback_ask_text = [
+"""\u270D\uFE0F <b>TTN raqami:</b> <code>{ttn_number}</code>
+
+Endi murojaatingiz matnini yozing.""",
+"""\u270D\uFE0F <b>Номер ТТН:</b> <code>{ttn_number}</code>
+
+Теперь напишите текст вашего обращения."""
+    ]
+
+    feedback_ask_file = [
+"""\U0001F4CE Agar mavjud bo'lsa, fayl yoki rasm yuboring.
+
+Fayl bo'lmasa, "{skip}" tugmasini bosing.""",
+"""\U0001F4CE Если есть, отправьте файл или фото.
+
+Если файла нет, нажмите кнопку "{skip}"."""
+    ]
+
+    feedback_skip_file = [
+        "Fayilsiz yuborish \u27A1\uFE0F",
+        "Отправить без файла \u27A1\uFE0F"
+    ]
+
+    feedback_wrong_file = [
+        "Iltimos, fayl, rasm yoki video yuboring.",
+        "Пожалуйста, отправьте файл, фото или видео."
+    ]
+
+    feedback_inline_order = [
+        "\U0001F4E6 TTN: {deal_id}",
+        "\U0001F4E6 ТТН: {deal_id}"
+    ]
+
+    feedback_inline_order_description = [
+        "Summa: {total_amount} | Sana: {deal_datetime}",
+        "Сумма: {total_amount} | Дата: {deal_datetime}"
+    ]
+
+    feedback_inline_no_orders = [
+        "Buyurtmalar topilmadi",
+        "Заказы не найдены"
+    ]
+
+    feedback_inline_no_orders_description = [
+        "Sizda arxivlangan buyurtmalar mavjud emas",
+        "У вас нет архивных заказов"
+    ]
+
     _ = [
         "",
         ""

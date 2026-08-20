@@ -78,6 +78,8 @@ class Feedback(models.Model):
     client = models.ForeignKey('app.Client', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Клиент')
     ttn_number = models.CharField(max_length=64, db_index=True, verbose_name='Номер ТТН')
     text = models.TextField(verbose_name='Текст обращения')
+    file_id = models.CharField(max_length=256, null=True, blank=True, verbose_name='File ID вложения обращения')
+    file_type = models.CharField(max_length=16, null=True, blank=True, verbose_name='Тип вложения обращения')
     answer = models.TextField(null=True, blank=True, verbose_name='Ответ администратора')
     answer_file_id = models.CharField(max_length=256, null=True, blank=True, verbose_name='File ID вложения ответа')
     answer_file_type = models.CharField(max_length=16, null=True, blank=True, verbose_name='Тип вложения ответа')
