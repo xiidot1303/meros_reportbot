@@ -172,7 +172,7 @@ PENDING_DOC_STATUS = "header_receive,pending"
 
 
 @notify_on_exception
-def fetch_pending_documents(client, limit=100):
+def fetch_pending_documents(client, limit=100) -> list:
     """Fetch the client's unaccepted (pending) factura documents from Soliq.
 
     The request is filtered server-side to ``header_receive,pending``, so the
@@ -199,7 +199,7 @@ def fetch_pending_documents(client, limit=100):
     )
     if not isinstance(response, dict):
         return []
-    return response.get("data", {}).get("documents", [])
+    return response.get("data", {}).get("documents", []) or []
 
 
 def download_factura_pdf(doc_id):
