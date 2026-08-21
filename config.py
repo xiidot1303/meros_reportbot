@@ -16,6 +16,10 @@ DB_PORT = os.environ.get("DB_PORT")
 DB_NAME = os.environ.get("DB_NAME")
 DB_USER = os.environ.get("DB_USER")
 DB_PASSWORD = os.environ.get("DB_PASSWORD")
+# "transaction" when DB_PORT points at PgBouncer in transaction mode, else
+# "session" (or "none" when connecting straight to Postgres). Decides whether
+# Django may hold connections open and keep server-side cursors.
+DB_POOL_MODE = os.environ.get("DB_POOL_MODE", "none").strip().lower()
 
 # Telegram bot
 BOT_API_TOKEN = os.environ.get("BOT_API_TOKEN")

@@ -5,7 +5,10 @@ ALLOWED_HOSTS=*
 CSRF_TRUSTED_ORIGINS=https://<csrf_trusted_origins>
 
 DB_HOST=localhost
-DB_PORT=5432
+# 6432 = PgBouncer, 5432 = Postgres direct
+DB_PORT=6432
+# transaction | session | none  (must match PgBouncer's pool_mode)
+DB_POOL_MODE=transaction
 DB_NAME=<db_name>
 DB_USER=<db_user>
 DB_PASSWORD=<db_password>

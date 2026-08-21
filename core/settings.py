@@ -91,6 +91,16 @@ ASGI_APPLICATION = 'core.asgi.application'
 
 
 if not DEBUG:
+    # DB_POOL_MODE describes what DB_PORT actually points at:
+    #   "transaction" — PgBouncer in transaction mode. Connections are handed
+    #       back to the pool after every transaction, so Django must NOT hold
+    #       one open (CONN_MAX_AGE=0) and must not use server-side cursors,
+    #       which would not survive being reassigned to another client.
+    #   "session"     — PgBouncer in session mode, or any pooler that pins a
+    #       connection for its whole lifetime. Django may keep it open.
+    #   "none"        — a direct Postgres connection; reuse is the whole win.
+    _pooled_via_bouncer = DB_POOL_MODE == "transaction"
+
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql_psycopg2",
@@ -99,6 +109,16 @@ if not DEBUG:
             "PASSWORD": DB_PASSWORD,
             "HOST": DB_HOST,
             "PORT": DB_PORT,
+            # PgBouncer already keeps the Postgres connections warm, so Django
+            # reconnecting to the *pooler* is cheap (a local TCP hop, no
+            # backend fork). Reusing them anyway avoids even that.
+            "CONN_MAX_AGE": 0 if _pooled_via_bouncer else 60,
+            # Don't let a broken pooled connection serve a request.
+            "CONN_HEALTH_CHECKS": True,
+            "DISABLE_SERVER_SIDE_CURSORS": _pooled_via_bouncer,
+            "OPTIONS": {
+                "connect_timeout": 5,
+            },
         }
     }
 else:
