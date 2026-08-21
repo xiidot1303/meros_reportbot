@@ -28,7 +28,7 @@ class Order(models.Model):
         ("C", "Отменен"),
     ]
     status = models.CharField(null=True, max_length=16, choices=STATUS_CHOICES)
-    deal_id = models.CharField(null=True, max_length=32)
+    deal_id = models.CharField(max_length=32, unique=True, verbose_name="ID заказа")
     project = models.CharField(null=True, max_length=255)
     client = models.ForeignKey(Client, null=True, on_delete=models.CASCADE)
     delivery_date = models.DateField(null=True)

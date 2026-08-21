@@ -53,9 +53,11 @@ def create_feedback(user_id, ttn_number, text, file_id=None, file_type=None):
 
 
 def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT):
-    """Archived ("A") orders of the user's active cabinet, filtered by deal_id.
+    """Archived ("A") orders of the user's active cabinet, matched by deal_id prefix.
 
     Feeds the TTN inline-query search; returns [] when the user has no cabinet.
+    Prefix (not substring) matching, so a query must start the TTN — this is
+    what lets the lookup use an index instead of scanning.
     """
     cabinet = Cabinet.objects.filter(
         bot_user__user_id=user_id, is_active=True
@@ -66,7 +68,7 @@ def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT):
     orders = Order.objects.filter(client=cabinet.client, status="A")
     query = (query or "").strip()
     if query:
-        orders = orders.filter(deal_id__icontains=query)
+        orders = orders.filter(deal_id__istartswith=query)
 
     return list(orders.order_by("-deal_datetime", "-id")[:limit])
 
