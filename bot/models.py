@@ -49,10 +49,15 @@ class Cabinet(models.Model):
         except:
             return super().__str__()
     
-    @property
-    @sync_to_async
-    def get_client(self) -> Client:
-        return self.client
+    async def get_client(self) -> Client:
+        """The cabinet's client, fetched without blocking the event loop.
+
+        A method rather than a property: the async FK fetch has to be awaited
+        on a call, so every caller uses `await cabinet.get_client()`.
+        """
+        if self.client_id is None:
+            return None
+        return await Client.objects.aget(pk=self.client_id)
 
 
 class Message(models.Model):

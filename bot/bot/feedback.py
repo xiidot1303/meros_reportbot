@@ -69,7 +69,7 @@ async def get_ttn(update: Update, context: CustomContext):
     """The client picked an order from the inline search, or typed a ТТН by hand."""
     ttn_number = (update.effective_message.text or "").strip()
 
-    order = await sync_to_async(find_client_order)(update.effective_user.id, ttn_number)
+    order = await find_client_order(update.effective_user.id, ttn_number)
     if not order:
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -136,7 +136,7 @@ async def _submit(update: Update, context: CustomContext, file_id=None, file_typ
     if not data:
         return await _ask_ttn(update, context)
 
-    feedback = await sync_to_async(create_feedback)(
+    feedback = await create_feedback(
         user_id=update.effective_user.id,
         ttn_number=data["ttn_number"],
         text=data.get("text") or "",
@@ -159,7 +159,7 @@ async def _submit(update: Update, context: CustomContext, file_id=None, file_typ
 async def ttn_inline_query(update: Update, context: CustomContext):
     """Inline search over the client's archived ("A") orders, keyed on deal_id."""
     query = update.inline_query.query or ""
-    orders = await sync_to_async(search_client_orders)(update.effective_user.id, query)
+    orders = await search_client_orders(update.effective_user.id, query)
 
     if not orders:
         await update.inline_query.answer(
@@ -224,7 +224,7 @@ async def admin_group_reply(update: Update, context: CustomContext):
     if not has_marker(raw_text):
         return
 
-    feedback = await sync_to_async(get_feedback_by_admin_message)(
+    feedback = await get_feedback_by_admin_message(
         message.reply_to_message.message_id
     )
     if not feedback:
@@ -238,7 +238,7 @@ async def admin_group_reply(update: Update, context: CustomContext):
     admin = update.effective_user
     admin_name = " ".join(filter(None, [admin.first_name, admin.last_name])) or admin.username
 
-    feedback = await sync_to_async(save_answer)(
+    feedback = await save_answer(
         feedback=feedback,
         answer=answer,
         admin_user_id=admin.id,

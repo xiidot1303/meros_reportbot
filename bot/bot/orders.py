@@ -11,7 +11,7 @@ async def _orders_list(update: Update, context: CustomContext):
     await update.effective_message.reply_chat_action(action=ChatAction.TYPING)
     # get current cabinet
     cabinet: Cabinet = await (await get_object_by_update(update)).get_active_cabinet
-    client: Client = await cabinet.get_client
+    client: Client = await cabinet.get_client()
 
     # send active orders first and load completed orders only on user request
     await context.bot.send_message(
@@ -50,7 +50,7 @@ async def show_completed_orders(update: Update, context: CustomContext):
     await update.callback_query.edit_message_reply_markup(None)
     # get current cabinet
     cabinet: Cabinet = await (await get_object_by_update(update)).get_active_cabinet
-    client: Client = await cabinet.get_client
+    client: Client = await cabinet.get_client()
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -74,7 +74,7 @@ async def load_more_orders(update: Update, context: CustomContext):
     await update.callback_query.edit_message_reply_markup(None)
     # get current cabinet
     cabinet: Cabinet = await (await get_object_by_update(update)).get_active_cabinet
-    client: Client = await cabinet.get_client
+    client: Client = await cabinet.get_client()
 
     context.job_queue.run_once(
         send_completed_orders_job,

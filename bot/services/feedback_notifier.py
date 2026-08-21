@@ -1,4 +1,3 @@
-from asgiref.sync import sync_to_async
 from telegram.constants import ParseMode
 
 from config import ADMIN_GROUP_ID
@@ -38,7 +37,10 @@ async def notify_new_feedback(feedback: Feedback):
     Admins answer by replying to that message with @@@ in the text/caption."""
     from bot.control.updater import application
 
-    bot_user = await sync_to_async(lambda: feedback.bot_user)()
+    # bot_user is already loaded — acreate() assigned the instance and
+    # get_feedback_by_admin_message() select_related()s it — so this is a plain
+    # attribute read, not a lazy FK query.
+    bot_user = feedback.bot_user
     if bot_user and bot_user.user_id:
         await application.bot.send_message(
             chat_id=bot_user.user_id,
@@ -51,7 +53,7 @@ async def notify_new_feedback(feedback: Feedback):
     if not ADMIN_GROUP_ID:
         return
 
-    text = await sync_to_async(admin_feedback_text)(feedback)
+    text = admin_feedback_text(feedback)
     message = await _send_with_attachment(
         bot=application.bot,
         chat_id=ADMIN_GROUP_ID,
@@ -66,7 +68,7 @@ async def notify_new_feedback(feedback: Feedback):
 
 async def send_answer_to_client(feedback: Feedback, bot):
     """Deliver the admin's answer — text and/or attachment — to the client."""
-    bot_user = await sync_to_async(lambda: feedback.bot_user)()
+    bot_user = feedback.bot_user
     if not (bot_user and bot_user.user_id):
         return False
 
@@ -91,7 +93,7 @@ async def mark_admin_message_answered(feedback: Feedback, bot):
     if not (ADMIN_GROUP_ID and feedback.admin_message_id):
         return
 
-    text = await sync_to_async(admin_answered_text)(feedback)
+    text = admin_answered_text(feedback)
     try:
         await bot.edit_message_text(
             chat_id=ADMIN_GROUP_ID,

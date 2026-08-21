@@ -65,7 +65,7 @@ async def send_reconciliation_act(update: Update, context: CustomContext):
 
     bot_user: Bot_user = await get_object_by_update(update)
     cabinet: Cabinet = await bot_user.get_active_cabinet
-    client: Client = await cabinet.get_client
+    client: Client = await cabinet.get_client()
 
     start_date, end_date = get_reconciliation_period(client)
 

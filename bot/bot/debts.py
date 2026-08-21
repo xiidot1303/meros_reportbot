@@ -10,7 +10,7 @@ async def _client_debts(update: Update, context: CustomContext):
     await update.callback_query.edit_message_reply_markup(None)
 
     cabinet: Cabinet = await (await get_object_by_update(update)).get_active_cabinet
-    client: Client = await cabinet.get_client
+    client: Client = await cabinet.get_client()
 
     context.application.create_task(
         _send_client_debts_in_background(

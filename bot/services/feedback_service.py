@@ -32,17 +32,17 @@ ADMIN_ANSWERED_TEXT = """✅ <b>Обращение обработано</b>
 {answer}"""
 
 
-def create_feedback(user_id, ttn_number, text, file_id=None, file_type=None):
+async def create_feedback(user_id, ttn_number, text, file_id=None, file_type=None):
     """Store a client's feedback. Returns the Feedback, or None if the user is unknown."""
-    bot_user = Bot_user.objects.filter(user_id=user_id).first()
+    bot_user = await Bot_user.objects.filter(user_id=user_id).afirst()
     if not bot_user:
         return None
 
-    cabinet = Cabinet.objects.filter(
+    cabinet = await Cabinet.objects.filter(
         bot_user=bot_user, is_active=True
-    ).select_related("client").first()
+    ).select_related("client").afirst()
 
-    return Feedback.objects.create(
+    return await Feedback.objects.acreate(
         bot_user=bot_user,
         client=cabinet.client if cabinet else None,
         ttn_number=ttn_number,
@@ -52,16 +52,16 @@ def create_feedback(user_id, ttn_number, text, file_id=None, file_type=None):
     )
 
 
-def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT):
+async def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT):
     """Archived ("A") orders of the user's active cabinet, matched by deal_id prefix.
 
     Feeds the TTN inline-query search; returns [] when the user has no cabinet.
     Prefix (not substring) matching, so a query must start the TTN — this is
     what lets the lookup use an index instead of scanning.
     """
-    cabinet = Cabinet.objects.filter(
+    cabinet = await Cabinet.objects.filter(
         bot_user__user_id=user_id, is_active=True
-    ).select_related("client").first()
+    ).select_related("client").afirst()
     if not (cabinet and cabinet.client):
         return []
 
@@ -70,24 +70,24 @@ def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT):
     if query:
         orders = orders.filter(deal_id__istartswith=query)
 
-    return list(orders.order_by("-deal_datetime", "-id")[:limit])
+    return [o async for o in orders.order_by("-deal_datetime", "-id")[:limit]]
 
 
-def find_client_order(user_id, deal_id):
+async def find_client_order(user_id, deal_id):
     """The archived order with this deal_id belonging to the user's active cabinet."""
     deal_id = (deal_id or "").strip()
     if not deal_id:
         return None
 
-    cabinet = Cabinet.objects.filter(
+    cabinet = await Cabinet.objects.filter(
         bot_user__user_id=user_id, is_active=True
-    ).select_related("client").first()
+    ).select_related("client").afirst()
     if not (cabinet and cabinet.client):
         return None
 
-    return Order.objects.filter(
+    return await Order.objects.filter(
         client=cabinet.client, status="A", deal_id=deal_id
-    ).first()
+    ).afirst()
 
 
 def strip_marker(text):
@@ -101,15 +101,15 @@ def has_marker(text):
     return bool(text) and ANSWER_MARKER in text
 
 
-def get_feedback_by_admin_message(message_id):
+async def get_feedback_by_admin_message(message_id):
     """Find the feedback whose admin-group message was replied to."""
-    return Feedback.objects.filter(
+    return await Feedback.objects.filter(
         admin_message_id=message_id
-    ).select_related("bot_user", "client").first()
+    ).select_related("bot_user", "client").afirst()
 
 
-def save_answer(feedback, answer, admin_user_id=None, admin_name=None,
-                file_id=None, file_type=None):
+async def save_answer(feedback, answer, admin_user_id=None, admin_name=None,
+                      file_id=None, file_type=None):
     """Store an admin's reply (text and/or attachment) on an existing Feedback."""
     feedback.answer = answer or ""
     feedback.answer_file_id = file_id
@@ -117,7 +117,7 @@ def save_answer(feedback, answer, admin_user_id=None, admin_name=None,
     feedback.answered_by = admin_user_id
     feedback.answered_by_name = admin_name
     feedback.answered_at = timezone.now()
-    feedback.save(update_fields=[
+    await feedback.asave(update_fields=[
         "answer", "answer_file_id", "answer_file_type",
         "answered_by", "answered_by_name", "answered_at",
     ])
