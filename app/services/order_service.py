@@ -17,6 +17,9 @@ def handle_orders_change(orders_list: list):
     existing_map = {c.deal_id: c for c in existing_orders}
     to_create = []
     to_update = []
+    # orders to notify about; enqueued only after the transaction commits
+    to_notify_ids = []
+    to_notify_deal_ids = []
 
     for order in orders_list:
         status = order[11]
@@ -40,8 +43,7 @@ def handle_orders_change(orders_list: list):
                 have_to_update = True
                 # notify about status change if status is in
                 if status in ["B#W", "B#S", "B#V", "A"]:
-                    notification_service.order_status_change_notify.delay(
-                        order_obj.id)
+                    to_notify_ids.append(order_obj.id)
 
             # # check order price change
             # current_total = Decimal(str(order_obj.total_amount)) if order_obj.total_amount is not None else None
@@ -82,8 +84,7 @@ def handle_orders_change(orders_list: list):
     for order in Order.objects.exclude(deal_id__in=incoming_ids):
         order.status = "A"
         to_update.append(order)
-        notification_service.order_status_change_notify.delay(
-            order.pk)
+        to_notify_ids.append(order.pk)
 
     # Perform bulk operations
     with transaction.atomic():
@@ -99,11 +100,23 @@ def handle_orders_change(orders_list: list):
                 Order.objects.bulk_update(
                     to_update[i:i+500], ["status", "total_amount"])
 
-    # send notification to all created orders
-    for created_order in to_create:
-        notification_service.order_status_change_notify.delay(
-            order_deal_id=created_order.deal_id
+        # bulk_create(ignore_conflicts=True) leaves pks unset, so notify by deal_id
+        to_notify_deal_ids.extend(order.deal_id for order in to_create)
+
+        # enqueue only once the rows are actually written, otherwise the worker
+        # can read the pre-update state (or a row that does not exist yet)
+        transaction.on_commit(
+            lambda: _enqueue_status_notifications(
+                to_notify_ids, to_notify_deal_ids)
         )
+
+
+def _enqueue_status_notifications(order_ids: list, order_deal_ids: list):
+    for order_id in order_ids:
+        notification_service.order_status_change_notify.delay(order_id=order_id)
+    for deal_id in order_deal_ids:
+        notification_service.order_status_change_notify.delay(
+            order_deal_id=deal_id)
 
 
 
