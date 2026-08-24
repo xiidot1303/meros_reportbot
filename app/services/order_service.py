@@ -78,6 +78,13 @@ def handle_orders_change(orders_list: list):
                 )
             )
 
+    # archived orders
+    for order in Order.objects.exclude(deal_id__in=incoming_ids):
+        order.status = "A"
+        to_update.append(order)
+        notification_service.order_status_change_notify.delay(
+            order.pk)
+
     # Perform bulk operations
     with transaction.atomic():
         if to_create:
@@ -98,10 +105,6 @@ def handle_orders_change(orders_list: list):
             order_deal_id=created_order.deal_id
         )
 
-    # delete orders
-    Order.objects.exclude(
-        deal_id__in=incoming_ids
-    ).delete()
 
 
 @sync_to_async
