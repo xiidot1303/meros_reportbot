@@ -32,11 +32,16 @@ def handle_orders_change(orders_list: list):
         manager = order[2]
         deal_time = order[9]
         total_amount = order[10]
+        delivery_number = order[12] if len(order) > 12 else None
 
         # update if exist
         if deal_id in existing_map:
             order_obj = existing_map[deal_id]
             have_to_update = False
+            # TTN number is issued after the order ships, so it can appear later
+            if delivery_number and order_obj.delivery_number != delivery_number:
+                order_obj.delivery_number = delivery_number
+                have_to_update = True
             # check for status change
             if order_obj.status != status:
                 order_obj.status = status
@@ -66,6 +71,7 @@ def handle_orders_change(orders_list: list):
             to_create.append(
                 Order(
                     deal_id=deal_id,
+                    delivery_number=delivery_number,
                     status=status,
                     project=project,
                     client=client,
@@ -98,7 +104,8 @@ def handle_orders_change(orders_list: list):
             # Update existing clients by 500 to avoid too large queries
             for i in range(0, len(to_update), 500):
                 Order.objects.bulk_update(
-                    to_update[i:i+500], ["status", "total_amount"])
+                    to_update[i:i+500],
+                    ["status", "total_amount", "delivery_number"])
 
         # bulk_create(ignore_conflicts=True) leaves pks unset, so notify by deal_id
         to_notify_deal_ids.extend(order.deal_id for order in to_create)
@@ -137,10 +144,12 @@ def get_archived_orders_by_client(client: Client, offset=0):
         manager = order[2]
         deal_time = order[9]
         total_amount = order[10]
+        delivery_number = order[11] if len(order) > 11 else None
 
         orders_list.append(
             Order(
                 deal_id=deal_id,
+                delivery_number=delivery_number,
                 project=project,
                 client=client,
                 delivery_date=datetime.strptime(

@@ -78,11 +78,12 @@ async def get_ttn(update: Update, context: CustomContext):
         )
         return GET_FEEDBACK_TTN
 
-    context.user_data["feedback"] = {"ttn_number": order.deal_id}
+    context.user_data["feedback"] = {"ttn_number": order.delivery_number}
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=context.words.feedback_ask_text.format(ttn_number=order.deal_id),
+        text=context.words.feedback_ask_text.format(
+            ttn_number=order.delivery_number),
         parse_mode=ParseMode.HTML,
     )
     return GET_FEEDBACK_TEXT
@@ -157,7 +158,7 @@ async def _submit(update: Update, context: CustomContext, file_id=None, file_typ
 
 
 async def ttn_inline_query(update: Update, context: CustomContext):
-    """Inline search over the client's archived ("A") orders, keyed on deal_id."""
+    """Inline search over the client's archived ("A") orders, keyed on TTN."""
     query = update.inline_query.query or ""
     orders = await search_client_orders(update.effective_user.id, query)
 
@@ -179,13 +180,14 @@ async def ttn_inline_query(update: Update, context: CustomContext):
     results = [
         InlineQueryResultArticle(
             id=str(uuid4()),
-            title=context.words.feedback_inline_order.format(deal_id=order.deal_id),
+            title=context.words.feedback_inline_order.format(
+                ttn_number=order.delivery_number),
             description=context.words.feedback_inline_order_description.format(
                 total_amount=_amount(order.total_amount),
                 deal_datetime=_datetime(order.deal_datetime),
             ),
-            # the chosen result posts the deal_id back into the chat
-            input_message_content=InputTextMessageContent(order.deal_id),
+            # the chosen result posts the TTN back into the chat
+            input_message_content=InputTextMessageContent(order.delivery_number),
         )
         for order in orders
     ]

@@ -443,8 +443,8 @@ Fayl bo'lmasa, "{skip}" tugmasini bosing.""",
     ]
 
     feedback_inline_order = [
-        "\U0001F4E6 TTN: {deal_id}",
-        "\U0001F4E6 ТТН: {deal_id}"
+        "\U0001F4E6 TTN: {ttn_number}",
+        "\U0001F4E6 ТТН: {ttn_number}"
     ]
 
     feedback_inline_order_description = [

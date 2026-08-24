@@ -53,11 +53,12 @@ async def create_feedback(user_id, ttn_number, text, file_id=None, file_type=Non
 
 
 async def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT):
-    """Archived ("A") orders of the user's active cabinet, matched by deal_id prefix.
+    """Archived ("A") orders of the user's active cabinet, matched by TTN prefix.
 
     Feeds the TTN inline-query search; returns [] when the user has no cabinet.
     Prefix (not substring) matching, so a query must start the TTN — this is
-    what lets the lookup use an index instead of scanning.
+    what lets the lookup use an index instead of scanning. Orders with no TTN
+    yet are skipped, since there is nothing for the user to reference.
     """
     cabinet = await Cabinet.objects.filter(
         bot_user__user_id=user_id, is_active=True
@@ -65,18 +66,20 @@ async def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT):
     if not (cabinet and cabinet.client):
         return []
 
-    orders = Order.objects.filter(client=cabinet.client, status="A")
+    orders = Order.objects.filter(
+        client=cabinet.client, status="A"
+    ).exclude(delivery_number__isnull=True).exclude(delivery_number="")
     query = (query or "").strip()
     if query:
-        orders = orders.filter(deal_id__istartswith=query)
+        orders = orders.filter(delivery_number__istartswith=query)
 
     return [o async for o in orders.order_by("-deal_datetime", "-id")[:limit]]
 
 
-async def find_client_order(user_id, deal_id):
-    """The archived order with this deal_id belonging to the user's active cabinet."""
-    deal_id = (deal_id or "").strip()
-    if not deal_id:
+async def find_client_order(user_id, delivery_number):
+    """The archived order with this TTN belonging to the user's active cabinet."""
+    delivery_number = (delivery_number or "").strip()
+    if not delivery_number:
         return None
 
     cabinet = await Cabinet.objects.filter(
@@ -86,7 +89,7 @@ async def find_client_order(user_id, deal_id):
         return None
 
     return await Order.objects.filter(
-        client=cabinet.client, status="A", deal_id=deal_id
+        client=cabinet.client, status="A", delivery_number=delivery_number
     ).afirst()
 
 
