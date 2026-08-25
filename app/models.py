@@ -38,6 +38,8 @@ class Order(models.Model):
     tin = models.CharField(null=True, max_length=32)
     price_type = models.CharField(null=True, max_length=255)
     manager = models.CharField(null=True, max_length=255)
+    sales_manager_name = models.CharField(
+        null=True, blank=True, max_length=255, verbose_name="Менеджер по продажам")
     total_amount = models.DecimalField(null=True, max_digits=12, decimal_places=0)
 
     def get_status_label(code):

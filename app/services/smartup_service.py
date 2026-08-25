@@ -122,6 +122,7 @@ class SmartUpApiClient:
                         "total_amount",
                         "status",
                         "delivery_number",
+                        "sales_manager_name",
                     ],
                     "filter": [
                         "and",
@@ -173,6 +174,7 @@ class SmartUpApiClient:
                     "deal_time",
                     "total_amount",
                     "delivery_number",
+                    "sales_manager_name",
                 ],
                 "filter": ["person_id", "=", [client_id]],
                 "sort": ["-deal_time"],

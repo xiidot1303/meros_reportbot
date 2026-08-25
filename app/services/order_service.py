@@ -35,6 +35,7 @@ def handle_orders_change(orders_list: list):
         deal_time = order[9]
         total_amount = order[10]
         delivery_number = order[12] if len(order) > 12 else None
+        sales_manager_name = order[13] if len(order) > 13 else None
 
         # update if exist
         if deal_id in existing_map:
@@ -43,6 +44,10 @@ def handle_orders_change(orders_list: list):
             # TTN number is issued after the order ships, so it can appear later
             if delivery_number and order_obj.delivery_number != delivery_number:
                 order_obj.delivery_number = delivery_number
+                have_to_update = True
+            # the sales manager can be assigned or reassigned after the order is placed
+            if sales_manager_name and order_obj.sales_manager_name != sales_manager_name:
+                order_obj.sales_manager_name = sales_manager_name
                 have_to_update = True
             # check for status change
             if order_obj.status != status:
@@ -102,6 +107,7 @@ def handle_orders_change(orders_list: list):
                     tin=tin,
                     price_type=price_type,
                     manager=manager,
+                    sales_manager_name=sales_manager_name,
                     total_amount=total_amount,
                 )
             )
@@ -125,7 +131,8 @@ def handle_orders_change(orders_list: list):
             for i in range(0, len(to_update), 500):
                 Order.objects.bulk_update(
                     to_update[i:i+500],
-                    ["status", "total_amount", "delivery_number", "delivery_date"])
+                    ["status", "total_amount", "delivery_number", "delivery_date",
+                     "sales_manager_name"])
 
         # bulk_create(ignore_conflicts=True) leaves pks unset, so notify by deal_id
         to_notify_deal_ids.extend(order.deal_id for order in to_create)
@@ -169,6 +176,7 @@ def get_archived_orders_by_client(client: Client, offset=0):
         deal_time = order[9]
         total_amount = order[10]
         delivery_number = order[11] if len(order) > 11 else None
+        sales_manager_name = order[12] if len(order) > 12 else None
 
         orders_list.append(
             Order(
@@ -183,6 +191,7 @@ def get_archived_orders_by_client(client: Client, offset=0):
                 tin=tin,
                 price_type=price_type,
                 manager=manager,
+                sales_manager_name=sales_manager_name,
                 total_amount=total_amount,
             )
         )
