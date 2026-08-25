@@ -4,15 +4,20 @@ from bot.models import Bot_user, Cabinet
 from app.services import *
 
 
+def _format_date(value) -> str:
+    """A date as the client expects to see it, or a dash when unset."""
+    if not value:
+        return "—"
+    return value.strftime("%d.%m.%Y")
+
+
 def _delivery_date(order: Order) -> str:
     """The shipping date as the client expects to see it.
 
     `delivery_date` is nullable, so orders that have not been scheduled yet
     render a dash rather than raising.
     """
-    if not order.delivery_date:
-        return "—"
-    return order.delivery_date.strftime("%d.%m.%Y")
+    return _format_date(order.delivery_date)
 
 
 def order_status_change_string(order: Order, bot_user: Bot_user = None) -> str:
@@ -53,6 +58,29 @@ def order_price_change_string(order: Order, bot_user: Bot_user, old_price, new_p
         )
     
     return text
+
+def order_delivery_date_change_string(order: Order, bot_user: Bot_user, old_date, new_date):
+    """Message for a rescheduled shipment, showing the old and new dates."""
+    if bot_user:
+        lang = bot_user.lang
+    else:
+        lang = 0
+
+    text = (
+        f"""{Strings.order_delivery_date_changed[lang]}""".format(
+            old_date=_format_date(old_date),
+            new_date=_format_date(new_date),
+        ) + "\n"
+        f"{Strings.order_info[lang]}".format(
+            delivery_date = _delivery_date(order),
+            manager = order.manager,
+            total_amount = format_number(order.total_amount),
+            tin = order.tin
+        )
+        )
+
+    return text
+
 
 def order_transport_string(transport: OrderTransport, bot_user: Bot_user = None) -> str:
     """Message for a freshly registered transport — the cargo is loaded and moving."""

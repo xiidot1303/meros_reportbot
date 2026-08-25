@@ -20,6 +20,8 @@ def handle_orders_change(orders_list: list):
     # orders to notify about; enqueued only after the transaction commits
     to_notify_ids = []
     to_notify_deal_ids = []
+    # (order_id, old_date, new_date) for shipments that were rescheduled
+    to_notify_delivery_date = []
 
     for order in orders_list:
         status = order[11]
@@ -49,6 +51,24 @@ def handle_orders_change(orders_list: list):
                 # notify about status change if status is in
                 if status in ["B#W", "B#S", "B#V", "A"]:
                     to_notify_ids.append(order_obj.id)
+
+            # check for delivery date change — SmartUp can reschedule a shipment
+            incoming_delivery_date = datetime.strptime(
+                delivery_date, "%d.%m.%Y").date() if delivery_date else None
+            if order_obj.delivery_date != incoming_delivery_date:
+                old_delivery_date = order_obj.delivery_date
+                order_obj.delivery_date = incoming_delivery_date
+                have_to_update = True
+                # only an actual reschedule is worth a message: the first time a
+                # date is set there was nothing for the client to have planned around
+                if old_delivery_date and incoming_delivery_date:
+                    to_notify_delivery_date.append(
+                        (
+                            order_obj.id,
+                            old_delivery_date.isoformat(),
+                            incoming_delivery_date.isoformat(),
+                        )
+                    )
 
             # # check order price change
             # current_total = Decimal(str(order_obj.total_amount)) if order_obj.total_amount is not None else None
@@ -105,7 +125,7 @@ def handle_orders_change(orders_list: list):
             for i in range(0, len(to_update), 500):
                 Order.objects.bulk_update(
                     to_update[i:i+500],
-                    ["status", "total_amount", "delivery_number"])
+                    ["status", "total_amount", "delivery_number", "delivery_date"])
 
         # bulk_create(ignore_conflicts=True) leaves pks unset, so notify by deal_id
         to_notify_deal_ids.extend(order.deal_id for order in to_create)
@@ -114,16 +134,20 @@ def handle_orders_change(orders_list: list):
         # can read the pre-update state (or a row that does not exist yet)
         transaction.on_commit(
             lambda: _enqueue_status_notifications(
-                to_notify_ids, to_notify_deal_ids)
+                to_notify_ids, to_notify_deal_ids, to_notify_delivery_date)
         )
 
 
-def _enqueue_status_notifications(order_ids: list, order_deal_ids: list):
+def _enqueue_status_notifications(
+        order_ids: list, order_deal_ids: list, delivery_date_changes: list = None):
     for order_id in order_ids:
         notification_service.order_status_change_notify.delay(order_id=order_id)
     for deal_id in order_deal_ids:
         notification_service.order_status_change_notify.delay(
             order_deal_id=deal_id)
+    for order_id, old_date, new_date in (delivery_date_changes or []):
+        notification_service.order_delivery_date_change_notify.delay(
+            order_id=order_id, old_date=old_date, new_date=new_date)
 
 
 

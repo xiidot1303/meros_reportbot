@@ -1,4 +1,5 @@
 import base64
+from datetime import date
 
 from core.celery import app
 from app.models import Order, OrderTransport
@@ -87,6 +88,29 @@ def order_price_change_notify(order_id, old_price, new_price):
     for cabinet in Cabinet.objects.filter(client=order.client):
         bot_user: Bot_user = cabinet.bot_user
         text = order_price_change_string(order, bot_user, old_price, new_price)
+        send_newsletter(bot_user.user_id, text)
+
+
+@app.task(name="app.services.notification_service.order_delivery_date_change_notify")
+@notify_on_exception(reraise=False)
+def order_delivery_date_change_notify(order_id, old_date=None, new_date=None):
+    """Tell the client their shipment was rescheduled.
+
+    Dates cross the queue as ISO strings, since Celery serializes the payload
+    as JSON and cannot carry a `date` object.
+    """
+    order: Order = Order.objects.filter(pk=order_id).select_related("client").first()
+    if not order or not order.client:
+        return
+
+    old_date = date.fromisoformat(old_date) if old_date else None
+    new_date = date.fromisoformat(new_date) if new_date else None
+
+    for cabinet in Cabinet.objects.filter(client=order.client).select_related("bot_user"):
+        bot_user: Bot_user = cabinet.bot_user
+        if not bot_user or not bot_user.user_id:
+            continue
+        text = order_delivery_date_change_string(order, bot_user, old_date, new_date)
         send_newsletter(bot_user.user_id, text)
 
 

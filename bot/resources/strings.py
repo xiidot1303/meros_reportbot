@@ -154,6 +154,11 @@ STIR: <code>{tin}</code>
         "<b>🔄 СУММА ИЗМЕНИЛАСЬ!</b>"
     ]
 
+    order_delivery_date_changed = [
+        "<b>🔄 JO'NATISH SANASI O'ZGARDI: </b><i>{old_date}</i> ➡️ <i>{new_date}</i>",
+        "<b>🔄 ДАТА ОТГРУЗКИ ИЗМЕНИЛАСЬ: </b><i>{old_date}</i> ➡️ <i>{new_date}</i>"
+    ]
+
     order_transport_on_the_way = [
 """🚚 <b>Yuk mashinaga ortildi va yo'lda!</b>
 <b>Buyurtma:</b> <code>{order_no}</code>
