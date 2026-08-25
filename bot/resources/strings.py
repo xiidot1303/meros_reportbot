@@ -234,11 +234,29 @@ Miqdor: <code>{total_amount} so'm</code>
     factura_document = [
 """\U0001F4C4 <b>Faktura</b>
 <b>№:</b> <code>{doc_no}</code>
-<b>Sana:</b> <code>{doc_date}</code>"""
+<b>Sana:</b> <code>{doc_date}</code>
+<b>Yuborilgan:</b> <code>{days_ago}</code>"""
 ,
 """\U0001F4C4 <b>Счет-фактура</b>
 <b>№:</b> <code>{doc_no}</code>
-<b>Дата:</b> <code>{doc_date}</code>"""
+<b>Дата:</b> <code>{doc_date}</code>
+<b>Отправлена:</b> <code>{days_ago}</code>"""
+    ]
+
+    # "sent N days ago", with the Russian plural agreeing with the number
+    factura_days_ago = [
+        "{days} kun oldin",
+        "{days} {plural} назад"
+    ]
+
+    factura_days_ago_today = [
+        "bugun",
+        "сегодня"
+    ]
+
+    factura_days_ago_unknown = [
+        "noma'lum",
+        "неизвестно"
     ]
 
     factura_download_failed = [
@@ -256,7 +274,7 @@ Miqdor: <code>{total_amount} so'm</code>
 <b>№:</b> <code>{doc_no}</code>
 <b>Sana:</b> <code>{doc_date}</code>"""
 ,
-"""⚠️ <b>Электронная счет-фактура не принята уже {days} дней.</b>
+"""⚠️ <b>Электронная счет-фактура не принята уже {days} {plural}.</b>
 <b>№:</b> <code>{doc_no}</code>
 <b>Дата:</b> <code>{doc_date}</code>"""
     ]

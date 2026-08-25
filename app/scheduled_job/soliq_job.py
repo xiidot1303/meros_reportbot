@@ -8,6 +8,7 @@ from app.services.notification_service import send_newsletter, send_newsletter_w
 from app.services.soliq_service import download_factura_pdf, fetch_pending_documents
 from bot.models import Cabinet
 from bot.resources.strings import Strings
+from bot.utils.dates import format_doc_date, russian_days_plural
 
 
 # Reminders wait until the morning: the sync runs every 10 minutes, so without
@@ -24,7 +25,7 @@ def _format_amount(value):
 def _client_factura_message(client, texture, user_id):
     return Strings(user_id=user_id).factura_new.format(
         doc_no=texture.doc_no or texture.doc_id,
-        doc_date=texture.doc_date,
+        doc_date=format_doc_date(texture.doc_date),
     )
 
 
@@ -32,8 +33,9 @@ def _client_factura_reminder(client, texture, user_id):
     days = (timezone.now().date() - texture.doc_date).days if texture.doc_date else 0
     return Strings(user_id=user_id).factura_reminder.format(
         days=days,
+        plural=russian_days_plural(days),
         doc_no=texture.doc_no or texture.doc_id,
-        doc_date=texture.doc_date,
+        doc_date=format_doc_date(texture.doc_date),
     )
 
 

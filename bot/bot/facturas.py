@@ -1,9 +1,24 @@
 import asyncio
 import io
+from datetime import date
 
 from bot.bot import *
 from bot.models import Cabinet
 from app.models import Client
+from bot.utils.dates import format_doc_date, russian_days_plural
+
+
+def _days_ago_text(context: CustomContext, doc_date) -> str:
+    """How long ago the factura was sent, in the user's language."""
+    if not doc_date:
+        return context.words.factura_days_ago_unknown
+
+    days = (date.today() - doc_date).days
+    if days <= 0:
+        return context.words.factura_days_ago_today
+
+    return context.words.factura_days_ago.format(
+        days=days, plural=russian_days_plural(days))
 
 
 async def _client_facturas(update: Update, context: CustomContext):
@@ -104,7 +119,8 @@ async def _send_factura_documents(context: CustomContext, chat_id: int, facturas
             document=document,
             caption=context.words.factura_document.format(
                 doc_no=doc_no,
-                doc_date=texture.doc_date,
+                doc_date=format_doc_date(texture.doc_date),
+                days_ago=_days_ago_text(context, texture.doc_date),
             ),
             parse_mode="HTML",
             reply_markup=reply_markup,
