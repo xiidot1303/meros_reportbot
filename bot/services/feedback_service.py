@@ -73,7 +73,8 @@ async def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT):
     if query:
         orders = orders.filter(delivery_number__istartswith=query)
 
-    return [o async for o in orders.order_by("-deal_datetime", "-id")[:limit]]
+    # sorted by the same date the picker shows, so newest-first reads correctly
+    return [o async for o in orders.order_by("-delivery_date", "-id")[:limit]]
 
 
 async def find_client_order(user_id, delivery_number):

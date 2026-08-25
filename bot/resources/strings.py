@@ -113,14 +113,14 @@ class Strings:
 
     order_info = [
 """
-Buyurtma sanasi: <code>{deal_datetime}</code>
+Jo'natish sanasi: <code>{delivery_date}</code>
 Menejer: <code>{manager}</code>
 Miqdor: <code>{total_amount} so'm</code>
 STIR: <code>{tin}</code>
 """
 ,
 """
-Дата заказа: <code>{deal_datetime}</code>
+Дата отгрузки: <code>{delivery_date}</code>
 Менеджер: <code>{manager}</code>
 Сумма: <code>{total_amount} сум</code>
 ИНН: <code>{tin}</code>
@@ -448,8 +448,8 @@ Fayl bo'lmasa, "{skip}" tugmasini bosing.""",
     ]
 
     feedback_inline_order_description = [
-        "Summa: {total_amount} | Sana: {deal_datetime}",
-        "Сумма: {total_amount} | Дата: {deal_datetime}"
+        "Summa: {total_amount} | Jo'natish: {delivery_date}",
+        "Сумма: {total_amount} | Дата отгрузки: {delivery_date}"
     ]
 
     feedback_inline_no_orders = [

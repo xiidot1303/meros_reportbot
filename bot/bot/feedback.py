@@ -184,7 +184,7 @@ async def ttn_inline_query(update: Update, context: CustomContext):
                 ttn_number=order.delivery_number),
             description=context.words.feedback_inline_order_description.format(
                 total_amount=_amount(order.total_amount),
-                deal_datetime=_datetime(order.deal_datetime),
+                delivery_date=_date(order.delivery_date),
             ),
             # the chosen result posts the TTN back into the chat
             input_message_content=InputTextMessageContent(order.delivery_number),
@@ -200,10 +200,10 @@ def _amount(value):
     return format_number(round(float(value)))
 
 
-def _datetime(value):
+def _date(value):
     if not value:
         return "—"
-    return value.strftime("%d.%m.%Y %H:%M")
+    return value.strftime("%d.%m.%Y")
 
 
 ###############################################################################
