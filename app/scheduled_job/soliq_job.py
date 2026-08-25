@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import time, timedelta
 
 from django.utils import timezone
 
@@ -8,6 +8,11 @@ from app.services.notification_service import send_newsletter, send_newsletter_w
 from app.services.soliq_service import download_factura_pdf, fetch_pending_documents
 from bot.models import Cabinet
 from bot.resources.strings import Strings
+
+
+# Reminders wait until the morning: the sync runs every 10 minutes, so without
+# this the day's first run right after midnight would wake people up.
+REMINDER_SEND_AFTER = time(9, 30)
 
 
 def _format_amount(value):
@@ -61,8 +66,13 @@ def _notify_new_factura(client, texture):
 
 
 def _notify_reminder(client, texture):
-    today = timezone.now().date()
+    now = timezone.now()
+    today = now.date()
     if not texture.doc_date:
+        return
+
+    # hold until 09:30 local; the next sync after that sends it
+    if now.time() < REMINDER_SEND_AFTER:
         return
 
     if texture.last_reminder_sent_at and texture.last_reminder_sent_at.date() == today:
