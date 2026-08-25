@@ -462,6 +462,11 @@ Fayl bo'lmasa, "{skip}" tugmasini bosing.""",
         "У вас нет архивных заказов"
     ]
 
+    main_menu_with_client = [
+        "\U0001F3E2 <b>{client_name}</b>\n\nAsosiy menyu \U0001F3E0",
+        "\U0001F3E2 <b>{client_name}</b>\n\n\u0413\u043b\u0430\u0432\u043d\u043e\u0435 \u043c\u0435\u043d\u044e \U0001F3E0"
+    ]
+
     staff = [
         "\U0001F465 Xodimlar",
         "\U0001F465 \u0421\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0438"
