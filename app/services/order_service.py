@@ -87,7 +87,7 @@ def handle_orders_change(orders_list: list):
             )
 
     # archived orders
-    for order in Order.objects.exclude(deal_id__in=incoming_ids):
+    for order in Order.objects.exclude(deal_id__in=incoming_ids, status="A"):
         order.status = "A"
         to_update.append(order)
         to_notify_ids.append(order.pk)
