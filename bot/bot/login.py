@@ -1,6 +1,7 @@
 from bot.bot import *
 from app.models import Client
 from bot.models import Bot_user
+from bot.services.access_service import accessible_clients_async
 
 
 async def _to_the_getting_contact_via_button(update: Update, context: CustomContext) -> int:
@@ -51,8 +52,7 @@ async def _to_the_selecting_branch(update: Update, context: CustomContext) -> in
     bot_user: Bot_user = await get_object_by_update(update)
     bot_user.phone = phone
     await bot_user.asave()
-    # get client
-    # build keyboard with branches
+    # clients this phone may open: the ones it owns plus the ones it staffs
     markup = InlineKeyboardMarkup(
         [
             [
@@ -60,7 +60,7 @@ async def _to_the_selecting_branch(update: Update, context: CustomContext) -> in
                     text=client.name,
                     callback_data=f"{client.id}"
                 ) 
-            ] async for client in Client.objects.filter(phone__icontains=phone)
+            ] async for client in (await accessible_clients_async(phone))
         ]
     )
     await update.message.reply_text(
@@ -104,8 +104,8 @@ async def get_contact_via_button(update: Update, context: CustomContext) -> int:
         text="✅",
         reply_markup = await reply_keyboard_remove()
     )
-    # search client by phone number
-    if await Client.objects.filter(phone__icontains=contact.phone_number).aexists():
+    # search accessible clients by phone number (owned or staffed)
+    if await (await accessible_clients_async(contact.phone_number)).aexists():
         context.user_data["phone_number"] = contact.phone_number
         return await _to_the_selecting_branch(update, context)
     else:
@@ -117,8 +117,8 @@ async def get_contact_via_button(update: Update, context: CustomContext) -> int:
 async def get_phone_number(update: Update, context: CustomContext) -> int:
     """Get user's phone number."""
     phone_number = update.effective_message.text.strip()
-    # search client by phone number
-    if await Client.objects.filter(phone__icontains=phone_number).aexists():
+    # search accessible clients by phone number (owned or staffed)
+    if await (await accessible_clients_async(phone_number)).aexists():
         context.user_data["phone_number"] = phone_number
         return await _to_the_selecting_branch(update, context)
     else:

@@ -90,3 +90,12 @@ class FeedbackAdmin(admin.ModelAdmin):
     list_filter = ('date', 'answered_at')
     readonly_fields = ('date', 'answered_at', 'answered_by', 'answered_by_name',
                        'answer_file_id', 'answer_file_type', 'admin_message_id')
+
+
+@admin.register(ClientStaff)
+class ClientStaffAdmin(admin.ModelAdmin):
+    list_display = ('phone', 'name', 'client', 'added_by', 'date')
+    search_fields = ('phone', 'name', 'client__name')
+    list_filter = ('date',)
+    autocomplete_fields = ()
+    readonly_fields = ('date',)

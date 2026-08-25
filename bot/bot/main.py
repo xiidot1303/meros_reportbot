@@ -11,6 +11,7 @@ from bot.bot.debts import _client_debts
 from bot.bot.orders import _orders_list
 from bot.bot.facturas import _client_facturas
 from bot.bot.feedback import _ask_ttn
+from bot.bot.staff import _to_the_staff_list
 
 
 async def start(update: Update, context: CustomContext):
@@ -63,6 +64,10 @@ async def client_debts(update: Update, context: CustomContext):
 
 async def client_facturas(update: Update, context: CustomContext):
     return await _client_facturas(update, context)
+
+
+async def staff(update: Update, context: CustomContext):
+    return await _to_the_staff_list(update, context)
 
 
 async def feedback(update: Update, context: CustomContext):

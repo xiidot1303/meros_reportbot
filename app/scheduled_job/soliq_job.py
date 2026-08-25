@@ -33,7 +33,7 @@ def _client_factura_reminder(client, texture, user_id):
 
 
 def _send_to_cabinet_users(client, message, lang=None):
-    for cabinet in Cabinet.objects.filter(client=client, is_active=True).select_related("bot_user"):
+    for cabinet in Cabinet.objects.filter(client=client).select_related("bot_user"):
         bot_user = cabinet.bot_user
         if not bot_user or not bot_user.user_id:
             continue
@@ -43,7 +43,7 @@ def _send_to_cabinet_users(client, message, lang=None):
 def _notify_new_factura(client, texture):
     pdf_bytes = download_factura_pdf(texture.doc_id)
     
-    for cabinet in Cabinet.objects.filter(client=client, is_active=True).select_related("bot_user"):
+    for cabinet in Cabinet.objects.filter(client=client).select_related("bot_user"):
         bot_user = cabinet.bot_user
         if bot_user and bot_user.user_id:
             message = _client_factura_message(client, texture, bot_user.user_id)
@@ -70,7 +70,7 @@ def _notify_reminder(client, texture):
 
     pdf_bytes = download_factura_pdf(texture.doc_id)
 
-    for cabinet in Cabinet.objects.filter(client=client, is_active=True).select_related("bot_user"):
+    for cabinet in Cabinet.objects.filter(client=client).select_related("bot_user"):
         bot_user = cabinet.bot_user
         if bot_user and bot_user.user_id:
             message = _client_factura_reminder(client, texture, bot_user.user_id)
@@ -91,7 +91,9 @@ def _notify_reminder(client, texture):
 @notify_on_exception(reraise=False)
 def sync_facturas_for_active_cabinets():
     clients = []
-    for cabinet in Cabinet.objects.filter(is_active=True, client__tin__isnull=False).select_related("client"):
+    # any linked cabinet makes the client worth syncing — not only the one
+    # its user happens to have open right now
+    for cabinet in Cabinet.objects.filter(client__tin__isnull=False).select_related("client"):
         client = cabinet.client
         if client and client.tin and client not in clients:
             clients.append(client)

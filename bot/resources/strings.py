@@ -462,6 +462,82 @@ Fayl bo'lmasa, "{skip}" tugmasini bosing.""",
         "У вас нет архивных заказов"
     ]
 
+    staff = [
+        "\U0001F465 Xodimlar",
+        "\U0001F465 \u0421\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0438"
+    ]
+
+    staff_list_title = [
+        "\U0001F465 <b>{client_name}</b> xodimlari:",
+        "\U0001F465 \u0421\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0438 <b>{client_name}</b>:"
+    ]
+
+    staff_list_empty = [
+        "\U0001F465 <b>{client_name}</b> uchun hali xodim qo'shilmagan.\n\n"
+        "Xodim qo'shsangiz, u ushbu tashkilotni botda ko'ra oladi va bildirishnomalarni oladi.",
+        "\U0001F465 \u0414\u043b\u044f <b>{client_name}</b> \u0435\u0449\u0451 \u043d\u0435\u0442 \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u043e\u0432.\n\n"
+        "\u0414\u043e\u0431\u0430\u0432\u043b\u0435\u043d\u043d\u044b\u0439 \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a \u0443\u0432\u0438\u0434\u0438\u0442 \u044d\u0442\u0443 \u043e\u0440\u0433\u0430\u043d\u0438\u0437\u0430\u0446\u0438\u044e \u0432 \u0431\u043e\u0442\u0435 \u0438 \u0431\u0443\u0434\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0430\u0442\u044c \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f."
+    ]
+
+    staff_add = [
+        "\u2795 Xodim qo'shish",
+        "\u2795 \u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0430"
+    ]
+
+    staff_ask_phone = [
+        "Xodimning telefon raqamini yuboring yoki kontaktini ulashing.\n\n"
+        "<i>Masalan: 901234567</i>",
+        "\u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 \u043d\u043e\u043c\u0435\u0440 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430 \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0430 \u0438\u043b\u0438 \u043f\u043e\u0434\u0435\u043b\u0438\u0442\u0435\u0441\u044c \u0435\u0433\u043e \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043e\u043c.\n\n"
+        "<i>\u041d\u0430\u043f\u0440\u0438\u043c\u0435\u0440: 901234567</i>"
+    ]
+
+    staff_phone_invalid = [
+        "\u26a0\ufe0f Telefon raqam noto'g'ri. Iltimos, qaytadan yuboring.\n\n<i>Masalan: 901234567</i>",
+        "\u26a0\ufe0f \u041d\u0435\u0432\u0435\u0440\u043d\u044b\u0439 \u043d\u043e\u043c\u0435\u0440 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430. \u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u043e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437.\n\n<i>\u041d\u0430\u043f\u0440\u0438\u043c\u0435\u0440: 901234567</i>"
+    ]
+
+    staff_already_added = [
+        "\u2139\ufe0f {phone} allaqachon qo'shilgan.",
+        "\u2139\ufe0f {phone} \u0443\u0436\u0435 \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d."
+    ]
+
+    staff_is_owner = [
+        "\u2139\ufe0f {phone} ushbu tashkilot egasi, uni xodim sifatida qo'shish shart emas.",
+        "\u2139\ufe0f {phone} \u2014 \u0432\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u044d\u0442\u043e\u0439 \u043e\u0440\u0433\u0430\u043d\u0438\u0437\u0430\u0446\u0438\u0438, \u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u0435\u0433\u043e \u043d\u0435 \u043d\u0443\u0436\u043d\u043e."
+    ]
+
+    staff_added = [
+        "\u2705 {phone} <b>{client_name}</b> xodimi sifatida qo'shildi.",
+        "\u2705 {phone} \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d \u043a\u0430\u043a \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a <b>{client_name}</b>."
+    ]
+
+    staff_removed = [
+        "\u2705 {phone} xodimlar ro'yxatidan o'chirildi.",
+        "\u2705 {phone} \u0443\u0434\u0430\u043b\u0451\u043d \u0438\u0437 \u0441\u043f\u0438\u0441\u043a\u0430 \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u043e\u0432."
+    ]
+
+    staff_not_owner = [
+        "\u26a0\ufe0f Faqat tashkilot egasi xodim qo'sha oladi.",
+        "\u26a0\ufe0f \u0414\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u043e\u0432 \u043c\u043e\u0436\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u043e\u0440\u0433\u0430\u043d\u0438\u0437\u0430\u0446\u0438\u0438."
+    ]
+
+    staff_access_granted = [
+        "\U0001F511 Sizga <b>{client_name}</b> tashkiloti kabineti ochildi.\n\n"
+        "Ko'rish uchun /start bosing.",
+        "\U0001F511 \u0412\u0430\u043c \u043e\u0442\u043a\u0440\u044b\u0442 \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u043a\u0430\u0431\u0438\u043d\u0435\u0442\u0443 <b>{client_name}</b>.\n\n"
+        "\u041d\u0430\u0436\u043c\u0438\u0442\u0435 /start, \u0447\u0442\u043e\u0431\u044b \u043e\u0442\u043a\u0440\u044b\u0442\u044c."
+    ]
+
+    staff_access_revoked = [
+        "\U0001F512 <b>{client_name}</b> tashkiloti kabinetiga kirish huquqingiz bekor qilindi.",
+        "\U0001F512 \u0412\u0430\u0448 \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u043a\u0430\u0431\u0438\u043d\u0435\u0442\u0443 <b>{client_name}</b> \u043e\u0442\u043e\u0437\u0432\u0430\u043d."
+    ]
+
+    no_accessible_clients = [
+        "\U0001F9D0 Bu telefon raqam bo'yicha tashkilot topilmadi.",
+        "\U0001F9D0 \u041f\u043e \u044d\u0442\u043e\u043c\u0443 \u043d\u043e\u043c\u0435\u0440\u0443 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430 \u043e\u0440\u0433\u0430\u043d\u0438\u0437\u0430\u0446\u0438\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e."
+    ]
+
     _ = [
         "",
         ""

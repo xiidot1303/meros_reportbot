@@ -1,4 +1,4 @@
-n = 18
+n = 20
 (
     SELECT_LANG,
     GET_NAME,
@@ -18,4 +18,6 @@ n = 18
     GET_FEEDBACK_TTN,
     GET_FEEDBACK_TEXT,
     GET_FEEDBACK_FILE,
+    STAFF_LIST,
+    GET_STAFF_PHONE,
 ) = range(0, n)

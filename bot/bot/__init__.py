@@ -19,6 +19,19 @@ async def is_message_back(update: Update):
         return False
 
 
+async def _is_owner_of_active_cabinet(update: Update) -> bool:
+    """Whether the user owns the client currently open, and so may manage its staff."""
+    from bot.services.access_service import is_owner_async
+    from bot.models import Bot_user, Cabinet
+    try:
+        bot_user = await Bot_user.objects.aget(user_id=update.effective_user.id)
+        cabinet = await bot_user.get_active_cabinet
+        client = await cabinet.get_client()
+    except Exception:
+        return False
+    return await is_owner_async(bot_user.phone, client)
+
+
 async def main_menu(update: Update, context: CustomContext):
     bot = context.bot
 
@@ -28,8 +41,15 @@ async def main_menu(update: Update, context: CustomContext):
         [InlineKeyboardButton(text=context.words.client_debts, callback_data="client_debts")],
         [InlineKeyboardButton(text=context.words.facturas, callback_data="facturas")],
         [InlineKeyboardButton(text=context.words.switch_cabinet, callback_data="switch_cabinet")],
-        [InlineKeyboardButton(text=context.words.feedback, callback_data="feedback")],
     ]
+    # staff management belongs to the owner of the open client only
+    if await _is_owner_of_active_cabinet(update):
+        inline_keyboards.append(
+            [InlineKeyboardButton(text=context.words.staff, callback_data="staff")]
+        )
+    inline_keyboards.append(
+        [InlineKeyboardButton(text=context.words.feedback, callback_data="feedback")]
+    )
     if update.callback_query:
         if update.effective_message.text:
             await update.callback_query.edit_message_text(

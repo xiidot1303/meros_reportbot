@@ -97,7 +97,7 @@ def order_transport_notify(transport_id):
     if not transport or not transport.order or not transport.order.client:
         return
 
-    for cabinet in Cabinet.objects.filter(client=transport.order.client, is_active=True).select_related("bot_user"):
+    for cabinet in Cabinet.objects.filter(client=transport.order.client).select_related("bot_user"):
         bot_user: Bot_user = cabinet.bot_user
         if not bot_user or not bot_user.user_id:
             continue

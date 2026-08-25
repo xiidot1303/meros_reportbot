@@ -105,3 +105,35 @@ class Feedback(models.Model):
     @property
     def is_answered(self):
         return bool(self.answer or self.answer_file_id)
+
+
+class ClientStaff(models.Model):
+    """A phone number an owner has granted access to one of their clients.
+
+    Access to a `Client` comes from two places: owning it (the bot user's phone
+    equals `Client.phone`) or being listed here. Both are keyed on the phone
+    number rather than on `Bot_user`, so a grant can be issued before the staff
+    member has ever opened the bot.
+    """
+    client = models.ForeignKey(
+        'app.Client', on_delete=models.CASCADE, related_name='staff',
+        verbose_name='Клиент')
+    phone = models.CharField(max_length=16, db_index=True, verbose_name='Телефон')
+    name = models.CharField(
+        null=True, blank=True, max_length=256, default='', verbose_name='Имя')
+    added_by = models.ForeignKey(
+        'Bot_user', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='granted_staff', verbose_name='Кем добавлен')
+    date = models.DateTimeField(
+        db_index=True, null=True, auto_now_add=True, blank=True, verbose_name='Дата добавления')
+
+    class Meta:
+        verbose_name = "Сотрудник клиента"
+        verbose_name_plural = "Сотрудники клиентов"
+        unique_together = [('client', 'phone')]
+
+    def __str__(self) -> str:
+        try:
+            return f"{self.phone} — {self.client.name}"
+        except:
+            return super().__str__()
