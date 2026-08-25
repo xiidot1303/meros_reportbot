@@ -20,23 +20,44 @@ def _delivery_date(order: Order) -> str:
     return _format_date(order.delivery_date)
 
 
+# What each status actually means to the client, rather than its raw label.
+# A status missing here falls back to the generic "status changed to <label>".
+_STATUS_HEADERS = {
+    "B#N": "new_order",                 # a brand new sale
+    "B#W": "order_status_waiting",      # finance department approved it
+    "B#S": "order_status_shipped",      # warehouse started assembling the goods
+    "B#V": "order_status_delivered",    # warehouse finished preparing the goods
+    "A": "order_status_archived",       # SmartUp/Soliq facturas were sent
+}
+
+
+def _status_header(status_code, lang) -> str:
+    """The headline for a status change, in the user's language."""
+    key = _STATUS_HEADERS.get(status_code)
+    if key:
+        return getattr(Strings, key)[lang]
+
+    # unknown status: fall back to naming it outright
+    label = Order.get_status_label(status_code) or status_code or "—"
+    return Strings.order_status_changed_to[lang] + "<i>" + label + "</i>"
+
+
 def order_status_change_string(order: Order, bot_user: Bot_user = None) -> str:
     if bot_user:
         lang = bot_user.lang
     else:
         lang = 0
-    status_code = order.status
+
     text = (
-        f"""{Strings.new_order[lang] if status_code == 'B#N' else 
-           (Strings.order_status_changed_to[lang] + "<i>" + Order.get_status_label(status_code) + "</i>")}\n""" \
+        f"{_status_header(order.status, lang)}\n" \
         f"{Strings.order_info[lang]}".format(
+            delivery_number = order.delivery_number or "—",
             delivery_date = _delivery_date(order),
-            manager = order.manager,
+            sales_manager_name = order.sales_manager_name or "—",
             total_amount = format_number(order.total_amount),
-            tin = order.tin
         )
         )
-    
+
     return text
 
 def order_price_change_string(order: Order, bot_user: Bot_user, old_price, new_price):
@@ -50,10 +71,10 @@ def order_price_change_string(order: Order, bot_user: Bot_user, old_price, new_p
     text = (
         f"""{Strings.order_price_changed[lang]}\n""" \
         f"{Strings.order_info[lang]}".format(
+            delivery_number = order.delivery_number or "—",
             delivery_date = _delivery_date(order),
-            manager = order.manager,
+            sales_manager_name = order.sales_manager_name or "—",
             total_amount =  f"{format_number(old_price)} -> {format_number(new_price)}",
-            tin = order.tin
         )
         )
     
@@ -72,10 +93,10 @@ def order_delivery_date_change_string(order: Order, bot_user: Bot_user, old_date
             new_date=_format_date(new_date),
         ) + "\n"
         f"{Strings.order_info[lang]}".format(
+            delivery_number = order.delivery_number or "—",
             delivery_date = _delivery_date(order),
-            manager = order.manager,
+            sales_manager_name = order.sales_manager_name or "—",
             total_amount = format_number(order.total_amount),
-            tin = order.tin
         )
         )
 

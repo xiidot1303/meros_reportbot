@@ -113,17 +113,17 @@ class Strings:
 
     order_info = [
 """
+TTN raqami: <code>{delivery_number}</code>
 Jo'natish sanasi: <code>{delivery_date}</code>
-Menejer: <code>{manager}</code>
+Savdo menejeri: <code>{sales_manager_name}</code>
 Miqdor: <code>{total_amount} so'm</code>
-STIR: <code>{tin}</code>
 """
 ,
 """
+Номер ТТН: <code>{delivery_number}</code>
 Дата отгрузки: <code>{delivery_date}</code>
-Менеджер: <code>{manager}</code>
+Менеджер по продажам: <code>{sales_manager_name}</code>
 Сумма: <code>{total_amount} сум</code>
-ИНН: <code>{tin}</code>
 """
     ]
 
@@ -147,6 +147,28 @@ STIR: <code>{tin}</code>
     order_status_changed_to = [
         "<b>🔄 BUYURTMA HOLATI O'ZGARDI: </b>",
         "<b>🔄 СТАТУС ЗАКАЗА ИЗМЕНИЛСЯ НА: </b>"
+    ]
+
+    # One header per status, naming what actually happened rather than the raw
+    # status label. Keyed by status code in `_STATUS_HEADERS` (string_service).
+    order_status_waiting = [
+        "✅ <b>BUYURTMA MOLIYA BO'LIMI TOMONIDAN TASDIQLANDI</b>",
+        "✅ <b>ЗАКАЗ ПОДТВЕРЖДЁН ФИНАНСОВЫМ ОТДЕЛОМ</b>"
+    ]
+
+    order_status_shipped = [
+        "📦 <b>OMBOR YUKNI YIG'ISHNI BOSHLADI</b>",
+        "📦 <b>СКЛАД НАЧАЛ СБОРКУ ТОВАРА</b>"
+    ]
+
+    order_status_delivered = [
+        "✔️ <b>OMBOR YUKNI TAYYORLADI</b>",
+        "✔️ <b>СКЛАД ПОДГОТОВИЛ ТОВАР</b>"
+    ]
+
+    order_status_archived = [
+        "✅ <b>BUYURTMANGIZ YAKUNLANDI!</b>\nHisob-faktura quyida biriktirilgan \U0001F447",
+        "✅ <b>ВАШ ЗАКАЗ ЗАВЕРШЁН!</b>\nСчёт-фактура прикреплена ниже \U0001F447"
     ]
 
     order_price_changed = [
