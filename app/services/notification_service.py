@@ -1,4 +1,5 @@
 import base64
+import re
 from datetime import date
 
 from core.celery import app
@@ -42,6 +43,17 @@ def get_order_report_bytes(order: Order):
     return smartup_client.download_order_report(report_template_id)
 
 
+def _order_report_filename(order: Order) -> str:
+    """Name the накладная after its TTN, which is what the client quotes.
+
+    Falls back to the deal id for orders whose TTN has not been issued yet, and
+    strips characters Telegram or a filesystem would object to.
+    """
+    reference = order.delivery_number or order.deal_id or "report"
+    reference = re.sub(r"[^\w.-]+", "_", str(reference), flags=re.UNICODE).strip("_")
+    return f"Накладная_{reference or 'report'}.xlsx"
+
+
 def send_order_report_to_user(order: Order, bot_user: Bot_user):
     try:
         report_bytes = get_order_report_bytes(order)
@@ -59,7 +71,7 @@ def send_order_report_to_user(order: Order, bot_user: Bot_user):
     send_newsletter_with_document(
         bot_user.user_id,
         report_bytes,
-        document_name=f"order_report_{order.deal_id}.xlsx",
+        document_name=_order_report_filename(order),
     )
 
 
