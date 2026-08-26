@@ -24,6 +24,7 @@ class CabinetAdmin(admin.ModelAdmin):
     list_display = ['bot_user', 'client', 'is_active', 'date']
     list_filter = ['is_active', 'date']
     search_fields = ['bot_user__name', 'client__name']
+    autocomplete_fields = ('bot_user', 'client')
 
 
 class MesageAdmin(admin.ModelAdmin):

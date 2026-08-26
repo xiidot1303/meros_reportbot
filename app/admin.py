@@ -9,10 +9,10 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('deal_id', 'client', 'client__phone', 'status', 'total_amount', 'delivery_date')
-    search_fields = ('deal_id', 'client__name', 'manager')
-    list_filter = ('status', 'delivery_date', 'client')
-
+    list_display = ('deal_id', 'delivery_number', 'client', 'client__phone', 'status', 'total_amount', 'delivery_date')
+    search_fields = ('deal_id', 'client__name', 'manager', 'delivery_number')
+    list_filter = ('status', 'delivery_date')
+    autocomplete_fields = ('client',)
 
 @admin.register(Texture)
 class TextureAdmin(admin.ModelAdmin):
