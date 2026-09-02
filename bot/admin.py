@@ -100,3 +100,4 @@ class ClientStaffAdmin(admin.ModelAdmin):
     list_filter = ('date',)
     autocomplete_fields = ()
     readonly_fields = ('date',)
+    autocomplete_fields = ('client',)
