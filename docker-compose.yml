@@ -1,0 +1,47 @@
+# Development only. Both services share the host network so the hardcoded
+# redis://localhost:6379 broker and the DB_HOST from .env resolve exactly as
+# they do when running the commands directly in the venv.
+services:
+  uvicorn:
+    build: .
+    command:
+      - watchmedo
+      - auto-restart
+      - --directory=/app
+      - --recursive
+      - --pattern=*.py;*.html;*.css;*.js
+      - --ignore-patterns=*/.git/*;*/venv/*;*/.venv/*;*/staticfiles/*;*/files/*;*/__pycache__/*
+      - --signal=SIGTERM
+      - --
+      - python
+      - manage.py
+      - run_uvicorn
+    network_mode: host
+    env_file: .env
+    volumes:
+      - .:/app
+    stop_signal: SIGINT
+    tty: true
+
+  celery:
+    build: .
+    command:
+      - watchmedo
+      - auto-restart
+      - --directory=/app
+      - --recursive
+      - --pattern=*.py
+      - --ignore-patterns=*/.git/*;*/venv/*;*/.venv/*;*/staticfiles/*;*/files/*;*/__pycache__/*
+      - --signal=SIGTERM
+      - --
+      - celery
+      - -A
+      - core
+      - worker
+      - --loglevel=info
+    network_mode: host
+    env_file: .env
+    volumes:
+      - .:/app
+    stop_signal: SIGTERM
+    tty: true
