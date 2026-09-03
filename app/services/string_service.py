@@ -113,4 +113,6 @@ def order_transport_string(transport: OrderTransport, bot_user: Bot_user = None)
         car_autonum=transport.car_autonum or "—",
         driver_name=transport.driver_name or "—",
         phone_number=transport.phone_number or "—",
+        box_count=transport.box_count or "—",
+        price=transport.price or "—",
     )

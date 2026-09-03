@@ -23,7 +23,7 @@ class TextureAdmin(admin.ModelAdmin):
 
 @admin.register(OrderTransport)
 class OrderTransportAdmin(admin.ModelAdmin):
-    list_display = ('order_id_external', 'car_brand', 'car_model', 'car_autonum', 'driver_name', 'phone_number', 'created_at')
-    search_fields = ('order_id_external', 'car_autonum', 'car_brand', 'car_model', 'firstname', 'lastname', 'phone_number')
+    list_display = ('order_id_external', 'car_brand', 'car_model', 'car_autonum', 'driver_name', 'phone_number', 'box_count', 'price', 'created_at')
+    search_fields = ('order_id_external', 'car_autonum', 'car_brand', 'car_model', 'firstname', 'lastname', 'phone_number', 'box_count', 'price')
     list_filter = ('created_at', 'car_brand')
     readonly_fields = ('created_at', 'updated_at')

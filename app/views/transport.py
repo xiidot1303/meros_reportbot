@@ -24,7 +24,7 @@ class OrderTransportView(View):
     Auth: Django user via HTTP Basic (or an active session).
     POST {"order_id": ..., "car_model": ..., "car_brand": ...,
           "car_autonum": ..., "firstname": ..., "lastname": ...,
-          "phone_number": ...}
+          "phone_number": ..., "box_count": ..., "price": ...}
     """
 
     def post(self, request, *args, **kwargs):
@@ -52,6 +52,8 @@ class OrderTransportView(View):
                 firstname=_clean(data.get("firstname")),
                 lastname=_clean(data.get("lastname")),
                 phone_number=_clean(data.get("phone_number")),
+                box_count=_clean(data.get("box_count")),
+                price=_clean(data.get("price")),
             )
         except Exception as exc:
             report_exception(

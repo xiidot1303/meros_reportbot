@@ -188,6 +188,8 @@ Miqdor: <code>{total_amount} so'm</code>
 <b>Davlat raqami:</b> <code>{car_autonum}</code>
 <b>Haydovchi:</b> <code>{driver_name}</code>
 <b>Telefon raqami:</b> <code>{phone_number}</code>
+<b>Korobkalar soni:</b> <code>{box_count}</code>
+<b>Narxi:</b> <code>{price}</code>
 """
 ,
 """🚚 <b>Груз погружен в машину и в пути!</b>
@@ -196,6 +198,8 @@ Miqdor: <code>{total_amount} so'm</code>
 <b>Гос. номер:</b> <code>{car_autonum}</code>
 <b>Водитель:</b> <code>{driver_name}</code>
 <b>Номер телефона:</b> <code>{phone_number}</code>
+<b>Количество коробок:</b> <code>{box_count}</code>
+<b>Цена:</b> <code>{price}</code>
 """
     ]
 

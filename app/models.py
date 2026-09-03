@@ -141,6 +141,8 @@ class OrderTransport(models.Model):
     firstname = models.CharField(max_length=128, null=True, blank=True, verbose_name="Имя водителя")
     lastname = models.CharField(max_length=128, null=True, blank=True, verbose_name="Фамилия водителя")
     phone_number = models.CharField(max_length=32, null=True, blank=True, verbose_name="Номер телефона водителя")
+    box_count = models.CharField(max_length=32, null=True, blank=True, verbose_name="Количество коробок")
+    price = models.CharField(max_length=32, null=True, blank=True, verbose_name="Цена")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
 

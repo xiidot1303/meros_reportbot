@@ -194,6 +194,26 @@ OPENAPI_SPEC = {
                         ),
                         "examples": ["+998901234567"],
                     },
+                    "box_count": {
+                        "type": ["string", "number", "null"],
+                        "maxLength": 32,
+                        "description": (
+                            "Number of boxes loaded. Stored verbatim as text — a number is "
+                            "accepted and stored as a string. Shown to the client as sent."
+                        ),
+                        "examples": ["12"],
+                    },
+                    "price": {
+                        "type": ["string", "number", "null"],
+                        "maxLength": 32,
+                        "description": (
+                            "Delivery price. Stored verbatim as text with no reformatting, "
+                            "rounding or currency handling — a number is accepted and stored "
+                            "as a string. **Send it already formatted the way the client "
+                            "should see it**, since it is shown to them unchanged."
+                        ),
+                        "examples": ["1 500 000"],
+                    },
                 },
             },
             "OrderTransportResponse": {
@@ -301,9 +321,16 @@ OPENAPI_SPEC = {
                     "If `order_matched` is `false` for orders that definitely exist on "
                     "your side, we are keying on different identifiers — stop and contact "
                     "us rather than working around it.\n\n"
-                    "### No client notification\n"
-                    "This endpoint only records data. The client is **not** messaged about "
-                    "their vehicle. Ask us if you need that."
+                    "### The client is notified on first save\n"
+                    "The **first** successful save for an `order_id` sends the client a "
+                    "Telegram message listing the vehicle, driver, box count and price — "
+                    "so every field here is read by the customer. Send `box_count` and "
+                    "`price` already formatted for display.\n\n"
+                    "Later posts for the same `order_id` update the record **silently**: "
+                    "the client is not messaged again, and they keep seeing the values "
+                    "from the first call. Get the numbers right the first time.\n\n"
+                    "No message is sent when `order_matched` is `false`, since we cannot "
+                    "tell which client to notify."
                 ),
                 "security": BASIC_AUTH,
                 "requestBody": {
@@ -319,6 +346,8 @@ OPENAPI_SPEC = {
                                 "firstname": "Азиз",
                                 "lastname": "Каримов",
                                 "phone_number": "+998901234567",
+                                "box_count": "12",
+                                "price": "1 500 000",
                             },
                         }
                     },
