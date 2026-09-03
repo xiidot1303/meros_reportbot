@@ -237,6 +237,12 @@ feedback_handler = ConversationHandler(
         CallbackQueryHandler(main.feedback, pattern="^feedback$")
     ],
     states={
+        SELECT_FEEDBACK_TYPE: [
+            CallbackQueryHandler(
+                feedback.select_type,
+                pattern="^feedback_type_"
+            )
+        ],
         GET_FEEDBACK_TTN: [
             MessageHandler(
                 exceptions_for_filter_text & filters.TEXT,

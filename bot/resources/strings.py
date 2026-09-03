@@ -411,28 +411,67 @@ Miqdor: <code>{total_amount} so'm</code>
 
     feedback_sent = [
 """\u2705 <b>Murojaatingiz yuborildi!</b>
-<b>TTN raqami:</b> <code>{ttn_number}</code>
-
+{number_line}
 Tez orada javob beramiz."""
 ,
 """\u2705 <b>Ваше обращение отправлено!</b>
-<b>Номер ТТН:</b> <code>{ttn_number}</code>
-
+{number_line}
 Мы ответим вам в ближайшее время."""
     ]
 
     feedback_answer = [
 """\U0001F4AC <b>Murojaatingizga javob berildi!</b>
-<b>TTN raqami:</b> <code>{ttn_number}</code>
-
+{number_line}
 <b>Javob:</b>
 {answer}"""
 ,
 """\U0001F4AC <b>На ваше обращение получен ответ!</b>
-<b>Номер ТТН:</b> <code>{ttn_number}</code>
-
+{number_line}
 <b>Ответ:</b>
 {answer}"""
+    ]
+
+    # the "<label>: <number>" line above; blank for an "other" feedback, which
+    # carries no reference number at all
+    feedback_number_line = [
+        "<b>{label}:</b> <code>{number}</code>\n",
+        "<b>{label}:</b> <code>{number}</code>\n"
+    ]
+
+    # feedback types — the first thing the client picks
+    feedback_type_prompt = [
+"""\U0001F4DD <b>Murojaat turini tanlang.</b>
+
+Murojaatingiz qaysi bo'limga tegishli?""",
+"""\U0001F4DD <b>Выберите тип обращения.</b>
+
+К какому отделу относится ваше обращение?"""
+    ]
+
+    feedback_type_warehouse = [
+        "\U0001F69A Ombor (TTN bo'yicha)",
+        "\U0001F69A Склад (по ТТН)"
+    ]
+
+    feedback_type_accounting = [
+        "\U0001F4B0 Buxgalteriya (hisob-faktura bo'yicha)",
+        "\U0001F4B0 Бухгалтерия (по счёту-фактуре)"
+    ]
+
+    feedback_type_other = [
+        "\U0001F4AC Boshqa",
+        "\U0001F4AC Другое"
+    ]
+
+    # labels for the reference number, per type
+    feedback_number_label_ttn = [
+        "TTN raqami",
+        "Номер ТТН"
+    ]
+
+    feedback_number_label_factura = [
+        "Hisob-faktura raqami",
+        "Номер счёта-фактуры"
     ]
 
     feedback_error = [
@@ -449,9 +488,23 @@ Quyidagi tugmani bosing va ro'yxatdan buyurtmangizni tanlang yoki TTN raqamini q
 Нажмите кнопку ниже и выберите заказ из списка или введите номер ТТН вручную."""
     ]
 
+    feedback_ask_factura = [
+"""\U0001F4C4 <b>Hisob-faktura raqamini tanlang.</b>
+
+Quyidagi tugmani bosing va ro'yxatdan hisob-fakturangizni tanlang yoki uning raqamini qo'lda kiriting.""",
+"""\U0001F4C4 <b>Выберите номер счёта-фактуры.</b>
+
+Нажмите кнопку ниже и выберите счёт-фактуру из списка или введите её номер вручную."""
+    ]
+
     feedback_search_ttn = [
         "\U0001F50D TTN raqamini qidirish",
         "\U0001F50D Найти номер ТТН"
+    ]
+
+    feedback_search_factura = [
+        "\U0001F50D Hisob-faktura raqamini qidirish",
+        "\U0001F50D Найти номер счёта-фактуры"
     ]
 
     feedback_ttn_not_found = [
@@ -459,13 +512,23 @@ Quyidagi tugmani bosing va ro'yxatdan buyurtmangizni tanlang yoki TTN raqamini q
         "Заказ с таким номером ТТН не найден. Пожалуйста, попробуйте ещё раз."
     ]
 
+    feedback_factura_not_found = [
+        "Bunday hisob-faktura raqamiga ega buyurtma topilmadi. Iltimos, qaytadan urinib ko'ring.",
+        "Заказ с таким номером счёта-фактуры не найден. Пожалуйста, попробуйте ещё раз."
+    ]
+
     feedback_ask_text = [
-"""\u270D\uFE0F <b>TTN raqami:</b> <code>{ttn_number}</code>
+"""\u270D\uFE0F <b>{label}:</b> <code>{number}</code>
 
 Endi murojaatingiz matnini yozing.""",
-"""\u270D\uFE0F <b>Номер ТТН:</b> <code>{ttn_number}</code>
+"""\u270D\uFE0F <b>{label}:</b> <code>{number}</code>
 
 Теперь напишите текст вашего обращения."""
+    ]
+
+    feedback_ask_text_other = [
+        "\u270D\uFE0F Murojaatingiz matnini yozing.",
+        "\u270D\uFE0F Напишите текст вашего обращения."
     ]
 
     feedback_ask_file = [
@@ -497,6 +560,18 @@ Fayl bo'lmasa, "{skip}" tugmasini bosing.""",
         "Сумма: {total_amount} | Дата отгрузки: {delivery_date}"
     ]
 
+    # the accounting search is keyed on the factura number end to end, so it
+    # leads the result and the ТТН drops to the description as a hint
+    feedback_inline_factura = [
+        "\U0001F4C4 Hisob-faktura: {deal_id}",
+        "\U0001F4C4 Счёт-фактура: {deal_id}"
+    ]
+
+    feedback_inline_factura_description = [
+        "TTN: {ttn_number} | Summa: {total_amount}",
+        "ТТН: {ttn_number} | Сумма: {total_amount}"
+    ]
+
     feedback_inline_no_orders = [
         "Buyurtmalar topilmadi",
         "Заказы не найдены"
@@ -505,6 +580,16 @@ Fayl bo'lmasa, "{skip}" tugmasini bosing.""",
     feedback_inline_no_orders_description = [
         "Sizda arxivlangan buyurtmalar mavjud emas",
         "У вас нет архивных заказов"
+    ]
+
+    feedback_inline_no_facturas = [
+        "Hisob-fakturalar topilmadi",
+        "Счета-фактуры не найдены"
+    ]
+
+    feedback_inline_no_facturas_description = [
+        "Sizda hisob-fakturalar mavjud emas",
+        "У вас нет счетов-фактур"
     ]
 
     main_menu_with_client = [

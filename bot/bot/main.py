@@ -10,7 +10,7 @@ from bot.bot.cabinet import _to_the_selecting_cabinet
 from bot.bot.debts import _client_debts
 from bot.bot.orders import _orders_list
 from bot.bot.facturas import _client_facturas
-from bot.bot.feedback import _ask_ttn
+from bot.bot.feedback import _ask_type
 from bot.bot.staff import _to_the_staff_list
 
 
@@ -71,7 +71,7 @@ async def staff(update: Update, context: CustomContext):
 
 
 async def feedback(update: Update, context: CustomContext):
-    return await _ask_ttn(update, context)
+    return await _ask_type(update, context)
 
 
 async def newsletter_update(update: NewsletterUpdate, context: CustomContext):

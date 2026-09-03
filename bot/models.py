@@ -79,9 +79,24 @@ class Message(models.Model):
         verbose_name_plural = "Сообщения"
 
 class Feedback(models.Model):
+    # what the feedback is about — decides which reference number is asked for
+    WAREHOUSE = 'warehouse'
+    ACCOUNTING = 'accounting'
+    OTHER = 'other'
+    TYPE_CHOICES = [
+        (WAREHOUSE, 'Склад'),
+        (ACCOUNTING, 'Бухгалтерия'),
+        (OTHER, 'Другое'),
+    ]
+
     bot_user = models.ForeignKey('Bot_user', null=True, blank=True, on_delete=models.CASCADE, verbose_name='Пользователь бота')
     client = models.ForeignKey('app.Client', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Клиент')
-    ttn_number = models.CharField(max_length=64, db_index=True, verbose_name='Номер ТТН')
+    feedback_type = models.CharField(
+        max_length=16, choices=TYPE_CHOICES, default=WAREHOUSE,
+        db_index=True, verbose_name='Тип обращения')
+    # ТТН for a warehouse issue, счёт-фактура (Order.deal_id) for an accounting
+    # one, empty for "other" — the reference number the whole thread is keyed on
+    ttn_number = models.CharField(max_length=64, blank=True, default='', db_index=True, verbose_name='Номер ТТН / счёта-фактуры')
     text = models.TextField(verbose_name='Текст обращения')
     file_id = models.CharField(max_length=256, null=True, blank=True, verbose_name='File ID вложения обращения')
     file_type = models.CharField(max_length=16, null=True, blank=True, verbose_name='Тип вложения обращения')
@@ -100,11 +115,18 @@ class Feedback(models.Model):
         ordering = ['-date']
 
     def __str__(self) -> str:
-        return f"ТТН {self.ttn_number}"
+        if not self.ttn_number:
+            return f"{self.get_feedback_type_display()} #{self.pk}"
+        return f"{self.number_label} {self.ttn_number}"
 
     @property
     def is_answered(self):
         return bool(self.answer or self.answer_file_id)
+
+    @property
+    def number_label(self):
+        """Russian label for the reference number, by feedback type."""
+        return 'Счёт-фактура' if self.feedback_type == self.ACCOUNTING else 'ТТН'
 
 
 class ClientStaff(models.Model):

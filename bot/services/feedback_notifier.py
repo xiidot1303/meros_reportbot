@@ -6,6 +6,17 @@ from bot.resources.strings import Strings
 from bot.services.feedback_service import admin_answered_text, admin_feedback_text
 
 
+def _client_number_line(feedback: Feedback, words: Strings):
+    """The "<label>: <number>" line for the client, or nothing for "other"."""
+    if not feedback.ttn_number:
+        return ""
+    label = (words.feedback_number_label_factura
+             if feedback.feedback_type == Feedback.ACCOUNTING
+             else words.feedback_number_label_ttn)
+    return words.feedback_number_line.format(
+        label=label, number=feedback.ttn_number)
+
+
 SENDABLE = ("photo", "video", "document", "audio", "voice",
             "animation", "video_note", "sticker")
 CAPTIONLESS = ("video_note", "sticker")
@@ -42,10 +53,11 @@ async def notify_new_feedback(feedback: Feedback):
     # attribute read, not a lazy FK query.
     bot_user = feedback.bot_user
     if bot_user and bot_user.user_id:
+        words = Strings(user_id=bot_user.user_id)
         await application.bot.send_message(
             chat_id=bot_user.user_id,
-            text=Strings(user_id=bot_user.user_id).feedback_sent.format(
-                ttn_number=feedback.ttn_number
+            text=words.feedback_sent.format(
+                number_line=_client_number_line(feedback, words)
             ),
             parse_mode=ParseMode.HTML,
         )
@@ -72,8 +84,9 @@ async def send_answer_to_client(feedback: Feedback, bot):
     if not (bot_user and bot_user.user_id):
         return False
 
-    caption = Strings(user_id=bot_user.user_id).feedback_answer.format(
-        ttn_number=feedback.ttn_number,
+    words = Strings(user_id=bot_user.user_id)
+    caption = words.feedback_answer.format(
+        number_line=_client_number_line(feedback, words),
         answer=feedback.answer or "",
     )
 
