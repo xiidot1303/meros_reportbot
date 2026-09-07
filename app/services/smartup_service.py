@@ -127,7 +127,7 @@ class SmartUpApiClient:
                     "filter": [
                         "and",
                         [
-                            ["status", "=", ["B#W", "B#S", "B#V"]],
+                            ["status", "=", ["B#N", "B#E", "B#W", "B#S", "B#V"]],
                             [
                                 "source_table",
                                 "=",
