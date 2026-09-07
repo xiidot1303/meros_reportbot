@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 from django.utils import timezone
 
@@ -167,15 +169,17 @@ class ProductPrice(models.Model):
     """A price-list row synced from the SmartUp Oracle DB.
 
     One row per (price type, product, warehouse card) — the price differs per
-    card, so the card grain must not be collapsed. Two price types are tracked;
-    the names mirror `MKR_PRICE_TYPES.NAME` in SmartUp.
+    card, so the card grain must not be collapsed. Two price types are tracked:
+    113 (25% prepayment) and 114 (100% prepayment).
     """
 
-    NEGOTIATED = 113
+    PREPAYMENT_25 = 113
     PREPAYMENT_100 = 114
+    # Client-facing wording, deliberately not SmartUp's own `MKR_PRICE_TYPES.NAME`
+    # (which calls 113 "Цена договорная (перечисление)").
     PRICE_TYPE_CHOICES = [
-        (NEGOTIATED, "Цена договорная (перечисление)"),
-        (PREPAYMENT_100, "При 100% Оплате (перечисление)"),
+        (PREPAYMENT_25, "При 25% оплате"),
+        (PREPAYMENT_100, "При 100% оплате"),
     ]
 
     price_type_id = models.BigIntegerField(
@@ -212,3 +216,48 @@ class ProductPrice(models.Model):
 
     def __str__(self) -> str:
         return f"{self.product_name or self.product_id} ({self.get_price_type_id_display()})"
+
+
+class PriceListFile(models.Model):
+    """The currently published price-list xlsx for one price type.
+
+    One row per price type. `telegram_file_id` caches Telegram's id for the
+    uploaded document so repeat clicks resend it by reference instead of
+    re-uploading ~1 MB every time; it is cleared whenever a new file is
+    published, since the id belongs to the old file.
+    """
+
+    price_type_id = models.BigIntegerField(
+        unique=True, choices=ProductPrice.PRICE_TYPE_CHOICES,
+        verbose_name="ID типа цены")
+    path = models.CharField(max_length=512, verbose_name="Путь к файлу")
+    generated_at = models.DateTimeField(verbose_name="Дата формирования")
+    row_count = models.IntegerField(default=0, verbose_name="Количество строк")
+    telegram_file_id = models.CharField(
+        max_length=256, null=True, blank=True, verbose_name="File ID в Telegram")
+
+    class Meta:
+        verbose_name = "Файл прайс-листа"
+        verbose_name_plural = "Файлы прайс-листов"
+        ordering = ["price_type_id"]
+
+    def __str__(self) -> str:
+        return f"{self.get_price_type_id_display()} ({self.generated_at:%d.%m.%Y %H:%M})"
+
+    @property
+    def exists(self) -> bool:
+        return bool(self.path) and os.path.exists(self.path)
+
+    @classmethod
+    def publish(cls, price_type_id, path, generated_at, row_count):
+        """Point this price type at a freshly built file, dropping the cached id."""
+        return cls.objects.update_or_create(
+            price_type_id=price_type_id,
+            defaults={
+                "path": path,
+                "generated_at": generated_at,
+                "row_count": row_count,
+                # the cached id refers to the file we just replaced
+                "telegram_file_id": None,
+            },
+        )

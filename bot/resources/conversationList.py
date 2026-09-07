@@ -1,4 +1,4 @@
-n = 21
+n = 22
 (
     SELECT_LANG,
     GET_NAME,
@@ -21,4 +21,5 @@ n = 21
     GET_FEEDBACK_FILE,
     STAFF_LIST,
     GET_STAFF_PHONE,
+    SELECT_PRICE_TYPE,
 ) = range(0, n)

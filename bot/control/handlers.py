@@ -12,7 +12,8 @@ from telegram.ext import (
 from bot.resources.conversationList import *
 
 from bot.bot import (
-    main, login, reconciliation_act, cabinet, orders, facturas, feedback, staff
+    main, login, reconciliation_act, cabinet, orders, facturas, feedback, staff,
+    price_list
 )
 
 exceptions_for_filter_text = (~filters.COMMAND) & (
@@ -193,6 +194,31 @@ facturas_handler = ConversationHandler(
 )
 
 
+price_list_handler = ConversationHandler(
+    entry_points=[
+        CallbackQueryHandler(main.price_list, pattern="^price_list$")
+    ],
+    states={
+        SELECT_PRICE_TYPE: [
+            CallbackQueryHandler(
+                price_list.send_price_list,
+                pattern="^price_type_\\d+$"
+            )
+        ],
+    },
+    fallbacks=[
+        CallbackQueryHandler(
+            callback=main.main_menu,
+            pattern="^main_menu$",
+        ),
+        CommandHandler('start', main.main_menu)
+    ],
+    allow_reentry=True,
+    persistent=True,
+    name="price_list_handler"
+)
+
+
 staff_handler = ConversationHandler(
     entry_points=[
         CallbackQueryHandler(main.staff, pattern="^staff$")
@@ -304,6 +330,7 @@ handlers = [
     orders_handler,
     debts_handler,
     facturas_handler,
+    price_list_handler,
     staff_handler,
     feedback_handler,
 

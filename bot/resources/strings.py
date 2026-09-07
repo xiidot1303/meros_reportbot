@@ -220,6 +220,57 @@ Miqdor: <code>{total_amount} so'm</code>
         "\U0001F4C4 Счет-фактуры"
     ]
 
+    # price lists — the menu button, the type picker and the delivered file
+    price_list = [
+        "\U0001F4B2 Narxlar ro'yxati",
+        "\U0001F4B2 Прайс-лист"
+    ]
+
+    price_list_type_prompt = [
+"""\U0001F4B2 <b>Narxlar ro'yxati turini tanlang.</b>
+
+Qaysi to'lov sharti bo'yicha narxlar kerak?""",
+"""\U0001F4B2 <b>Выберите тип прайс-листа.</b>
+
+Цены по какому условию оплаты вам нужны?"""
+    ]
+
+    price_list_type_negotiated = [
+        "🤝 25% to'lov",
+        "🤝 При 25% оплате"
+    ]
+
+    price_list_type_prepayment_100 = [
+        "💯 100% to'lov",
+        "💯 При 100% оплате"
+    ]
+
+    price_list_loading = [
+        "Narxlar ro'yxati yuklanmoqda...",
+        "Прайс-лист загружается..."
+    ]
+
+    price_list_document = [
+"""\U0001F4B2 <b>{price_type}</b>
+
+Tovarlar soni: <b>{count}</b>
+Ma'lumot holati: <b>{generated_at}</b>""",
+"""\U0001F4B2 <b>{price_type}</b>
+
+Количество товаров: <b>{count}</b>
+Актуально на: <b>{generated_at}</b>"""
+    ]
+
+    price_list_not_ready = [
+        "Narxlar ro'yxati hozircha tayyor emas. Iltimos, birozdan so'ng urinib ko'ring.",
+        "Прайс-лист пока не готов. Пожалуйста, попробуйте через несколько минут."
+    ]
+
+    price_list_error = [
+        "Narxlar ro'yxatini yuborishda xatolik yuz berdi. Iltimos, keyinroq urinib ko'ring.",
+        "Не удалось отправить прайс-лист. Пожалуйста, попробуйте позже."
+    ]
+
     facturas_loading = [
         "Fakturalar yuklanmoqda...",
         "Счет-фактуры загружаются..."

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 # Both price lists we mirror locally.
-PRICE_TYPE_IDS = (ProductPrice.NEGOTIATED, ProductPrice.PREPAYMENT_100)
+PRICE_TYPE_IDS = (ProductPrice.PREPAYMENT_25, ProductPrice.PREPAYMENT_100)
 
 BULK_BATCH_SIZE = 500
 

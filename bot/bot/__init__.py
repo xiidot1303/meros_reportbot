@@ -56,6 +56,7 @@ async def main_menu(update: Update, context: CustomContext):
         [InlineKeyboardButton(text=context.words.order_history, callback_data="order_history")],
         [InlineKeyboardButton(text=context.words.client_debts, callback_data="client_debts")],
         [InlineKeyboardButton(text=context.words.facturas, callback_data="facturas")],
+        [InlineKeyboardButton(text=context.words.price_list, callback_data="price_list")],
         [InlineKeyboardButton(text=context.words.switch_cabinet, callback_data="switch_cabinet")],
     ]
     # staff management belongs to the owner of the open client only
