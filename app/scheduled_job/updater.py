@@ -1,6 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import register_events, DjangoJobStore
-from app.scheduled_job import smartup_job, soliq_job
+from app.scheduled_job import smartup_job, soliq_job, price_job
 from bot.scheduled_job import mailing
 from bot.services.redis_service import save_langs_to_redis
 from asgiref.sync import async_to_sync
@@ -24,6 +24,10 @@ class jobs:
 
     scheduler.add_job(
         soliq_job.sync_facturas_for_active_cabinets,
+        'interval', minutes=10)
+
+    scheduler.add_job(
+        price_job.sync_prices,
         'interval', minutes=10)
 
     # bot

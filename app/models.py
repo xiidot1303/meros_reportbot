@@ -161,3 +161,54 @@ class OrderTransport(models.Model):
     @property
     def car_name(self):
         return " ".join(filter(None, [self.car_brand, self.car_model])) or None
+
+
+class ProductPrice(models.Model):
+    """A price-list row synced from the SmartUp Oracle DB.
+
+    One row per (price type, product, warehouse card) — the price differs per
+    card, so the card grain must not be collapsed. Two price types are tracked;
+    the names mirror `MKR_PRICE_TYPES.NAME` in SmartUp.
+    """
+
+    NEGOTIATED = 113
+    PREPAYMENT_100 = 114
+    PRICE_TYPE_CHOICES = [
+        (NEGOTIATED, "Цена договорная (перечисление)"),
+        (PREPAYMENT_100, "При 100% Оплате (перечисление)"),
+    ]
+
+    price_type_id = models.BigIntegerField(
+        db_index=True, choices=PRICE_TYPE_CHOICES, verbose_name="ID типа цены")
+    price_type_name = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Тип цены")
+    product_id = models.BigIntegerField(db_index=True, verbose_name="ID товара")
+    product_name = models.CharField(
+        max_length=512, null=True, blank=True, db_index=True, verbose_name="Наименование товара")
+    manufacturer = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Производитель")
+    box_quant = models.DecimalField(
+        max_digits=18, decimal_places=3, null=True, blank=True, verbose_name="Количество в коробке")
+    card_id = models.BigIntegerField(db_index=True, verbose_name="ID карточки")
+    card_code = models.CharField(
+        max_length=64, null=True, blank=True, verbose_name="Код карточки")
+    price = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True, verbose_name="Цена")
+    quant = models.DecimalField(
+        max_digits=18, decimal_places=3, null=True, blank=True, verbose_name="Остаток")
+    expiry_date = models.DateField(null=True, blank=True, verbose_name="Срок годности")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+
+    class Meta:
+        verbose_name = "Цена товара"
+        verbose_name_plural = "Прайс-лист"
+        ordering = ["product_name", "price_type_id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["price_type_id", "product_id", "card_id"],
+                name="unique_product_price_row",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.product_name or self.product_id} ({self.get_price_type_id_display()})"

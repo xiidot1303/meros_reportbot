@@ -27,3 +27,11 @@ class OrderTransportAdmin(admin.ModelAdmin):
     search_fields = ('order_id_external', 'car_autonum', 'car_brand', 'car_model', 'firstname', 'lastname', 'phone_number', 'box_count', 'price')
     list_filter = ('created_at', 'car_brand')
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ProductPrice)
+class ProductPriceAdmin(admin.ModelAdmin):
+    list_display = ('product_name', 'manufacturer', 'price_type_id', 'price', 'quant', 'card_code', 'expiry_date', 'updated_at')
+    search_fields = ('product_name', 'manufacturer', 'card_code', 'product_id')
+    list_filter = ('price_type_id', 'manufacturer', 'expiry_date')
+    readonly_fields = ('updated_at',)
