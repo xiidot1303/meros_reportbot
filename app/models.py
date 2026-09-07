@@ -187,6 +187,8 @@ class ProductPrice(models.Model):
     price_type_name = models.CharField(
         max_length=255, null=True, blank=True, verbose_name="Тип цены")
     product_id = models.BigIntegerField(db_index=True, verbose_name="ID товара")
+    product_code = models.CharField(
+        max_length=64, null=True, blank=True, db_index=True, verbose_name="Код товара")
     product_name = models.CharField(
         max_length=512, null=True, blank=True, db_index=True, verbose_name="Наименование товара")
     manufacturer = models.CharField(

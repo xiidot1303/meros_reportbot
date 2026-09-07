@@ -57,6 +57,7 @@ PRODUCT_PRICES_QUERY = """
 SELECT P."PRICE_TYPE_ID",
        PT."NAME"              AS "PRICE_TYPE_NAME",
        P."PRODUCT_ID",
+       PR."CODE"              AS "PRODUCT_CODE",
        PR."NAME"              AS "PRODUCT_NAME",
        MP."NAME"              AS "MANUFACTURER",
        PR."BOX_QUANT",

@@ -36,10 +36,10 @@ HEADER_ROWS = 4
 
 # Columns of the generated sheet, in order: (header, model field, width).
 COLUMNS = [
+    ("Код товара", "product_code", 22),
     ("Наименование товара", "product_name", 55),
     ("Производитель", "manufacturer", 32),
     ("Кол-во в коробке", "box_quant", 18),
-    ("Код карточки", "card_code", 16),
     ("Цена", "price", 16),
     ("Остаток", "quant", 14),
     ("Срок годности", "expiry_date", 16),

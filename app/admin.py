@@ -31,8 +31,8 @@ class OrderTransportAdmin(admin.ModelAdmin):
 
 @admin.register(ProductPrice)
 class ProductPriceAdmin(admin.ModelAdmin):
-    list_display = ('product_name', 'manufacturer', 'price_type_id', 'price', 'quant', 'card_code', 'expiry_date', 'updated_at')
-    search_fields = ('product_name', 'manufacturer', 'card_code', 'product_id')
+    list_display = ('product_code', 'product_name', 'manufacturer', 'price_type_id', 'price', 'quant', 'card_code', 'expiry_date', 'updated_at')
+    search_fields = ('product_code', 'product_name', 'manufacturer', 'card_code', 'product_id')
     list_filter = ('price_type_id', 'manufacturer', 'expiry_date')
     readonly_fields = ('updated_at',)
 

@@ -28,6 +28,7 @@ BULK_BATCH_SIZE = 500
 # Fields copied from the freshly fetched row onto an existing one.
 SYNCED_FIELDS = [
     "price_type_name",
+    "product_code",
     "product_name",
     "manufacturer",
     "box_quant",
@@ -73,6 +74,7 @@ def build_price_object(row):
         price_type_id=int(price_type_id),
         price_type_name=row.get("price_type_name"),
         product_id=int(product_id),
+        product_code=row.get("product_code"),
         product_name=row.get("product_name"),
         manufacturer=row.get("manufacturer"),
         box_quant=parse_decimal(row.get("box_quant")),
