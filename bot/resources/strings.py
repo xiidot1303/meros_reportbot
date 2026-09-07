@@ -186,6 +186,7 @@ Miqdor: <code>{total_amount} so'm</code>
     order_transport_on_the_way = [
 """🚚 <b>Yuk mashinaga ortildi va yo'lda!</b>
 <b>Buyurtma:</b> <code>{order_no}</code>
+<b>TTN raqami:</b> <code>{delivery_number}</code>
 <b>Avtomobil:</b> <code>{car_name}</code>
 <b>Davlat raqami:</b> <code>{car_autonum}</code>
 <b>Haydovchi:</b> <code>{driver_name}</code>
@@ -196,6 +197,7 @@ Miqdor: <code>{total_amount} so'm</code>
 ,
 """🚚 <b>Груз погружен в машину и в пути!</b>
 <b>Заказ:</b> <code>{order_no}</code>
+<b>Номер ТТН:</b> <code>{delivery_number}</code>
 <b>Автомобиль:</b> <code>{car_name}</code>
 <b>Гос. номер:</b> <code>{car_autonum}</code>
 <b>Водитель:</b> <code>{driver_name}</code>

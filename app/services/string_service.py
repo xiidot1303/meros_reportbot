@@ -120,6 +120,7 @@ def order_transport_string(transport: OrderTransport, bot_user: Bot_user = None)
 
     return Strings(user_id=user_id).order_transport_on_the_way.format(
         order_no=order.deal_id if order else transport.order_id_external,
+        delivery_number=(order.delivery_number if order else None) or "—",
         car_name=transport.car_name or "—",
         car_autonum=transport.car_autonum or "—",
         driver_name=transport.driver_name or "—",
