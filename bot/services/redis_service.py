@@ -27,9 +27,9 @@ def save_langs_to_redis():
             # Save the langs to Redis in bulk
             redis_client.mset(user_langs)
         else:
-            print("No bot users found in the database to save.")
+            "No bot users found in the database to save."
     else:
-        print("Redis is not empty. No action taken.")
+        "Redis is not empty. No action taken."
 
 
 def set_user_lang(user_id, lang):

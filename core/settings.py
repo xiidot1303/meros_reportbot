@@ -10,8 +10,26 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import warnings
 from pathlib import Path
 from config import *
+
+# The ConversationHandlers in bot/control/handlers.py are built at import time
+# and each one warns about `per_message=False` — a deliberate design choice
+# there, not a per-handler bug to fix. That module gets pulled in transitively
+# (the scheduler imports the mailing job, which imports the updater), so the
+# warnings would otherwise appear on every manage.py command and on server
+# start. Settings are imported before the apps load on every entry point
+# (manage.py, wsgi, asgi), which makes this the one place the filter is
+# installed early enough to take effect.
+#
+# Matched on the message alone: PTB emits these with a `stacklevel` that
+# attributes them to bot/control/handlers.py, so a `module="telegram.ext"`
+# filter never matches.
+warnings.filterwarnings(
+    "ignore",
+    message=r"If 'per_message=False'.*",
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

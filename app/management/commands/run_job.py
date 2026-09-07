@@ -10,18 +10,10 @@ there is runnable here immediately — there is no separate registry to update.
 """
 
 import time
-import warnings
 
 from django.core.management.base import BaseCommand, CommandError
-from telegram.warnings import PTBUserWarning
 
 from app.scheduled_job.updater import jobs
-
-warnings.filterwarnings(
-    "ignore",
-    message=r"If 'per_message=False'.*",
-    category=PTBUserWarning,
-)
 
 
 def get_jobs():
