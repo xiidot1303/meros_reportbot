@@ -10,9 +10,11 @@ class jobs:
     scheduler.add_jobstore(DjangoJobStore(), 'djangojobstore')
     register_events(scheduler)
     # scheduler.add_job(, 'interval', minutes=5)
+    # `async_to_sync` hides the wrapped coroutine's name, so set it explicitly —
+    # it is what `run_job` uses to address this job.
     scheduler.add_job(
         async_to_sync(mailing.send_message), 
-        'interval', minutes=5)
+        'interval', minutes=5, name='send_message')
 
     scheduler.add_job(
         smartup_job.fetch_clients, 
