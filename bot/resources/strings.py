@@ -113,6 +113,7 @@ class Strings:
 
     order_info = [
 """
+Buyurtma raqami: <code>{deal_id}</code>
 TTN raqami: <code>{delivery_number}</code>
 Jo'natish sanasi: <code>{delivery_date}</code>
 Savdo menejeri: <code>{sales_manager_name}</code>
@@ -120,6 +121,7 @@ Miqdor: <code>{total_amount} so'm</code>
 """
 ,
 """
+Номер заказа: <code>{deal_id}</code>
 Номер ТТН: <code>{delivery_number}</code>
 Дата отгрузки: <code>{delivery_date}</code>
 Менеджер по продажам: <code>{sales_manager_name}</code>

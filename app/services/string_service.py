@@ -51,6 +51,7 @@ def order_status_change_string(order: Order, bot_user: Bot_user = None) -> str:
     text = (
         f"{_status_header(order.status, lang)}\n" \
         f"{Strings.order_info[lang]}".format(
+            deal_id = order.deal_id or "—",
             delivery_number = order.delivery_number or "—",
             delivery_date = _delivery_date(order),
             sales_manager_name = order.sales_manager_name or "—",
@@ -71,6 +72,7 @@ def order_price_change_string(order: Order, bot_user: Bot_user, old_price, new_p
     text = (
         f"""{Strings.order_price_changed[lang]}\n""" \
         f"{Strings.order_info[lang]}".format(
+            deal_id = order.deal_id or "—",
             delivery_number = order.delivery_number or "—",
             delivery_date = _delivery_date(order),
             sales_manager_name = order.sales_manager_name or "—",
@@ -93,6 +95,7 @@ def order_delivery_date_change_string(order: Order, bot_user: Bot_user, old_date
             new_date=_format_date(new_date),
         ) + "\n"
         f"{Strings.order_info[lang]}".format(
+            deal_id = order.deal_id or "—",
             delivery_number = order.delivery_number or "—",
             delivery_date = _delivery_date(order),
             sales_manager_name = order.sales_manager_name or "—",
