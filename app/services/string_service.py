@@ -107,12 +107,20 @@ def order_transport_string(transport: OrderTransport, bot_user: Bot_user = None)
     """Message for a freshly registered transport — the cargo is loaded and moving."""
     user_id = bot_user.user_id if bot_user else None
 
+    # the order's own total is the authoritative price; `transport.price` is the
+    # manually entered fallback for a transport not yet linked to an order
+    order = transport.order
+    if order and order.total_amount is not None:
+        price = format_number(order.total_amount)
+    else:
+        price = transport.price or "—"
+
     return Strings(user_id=user_id).order_transport_on_the_way.format(
-        order_no=transport.order.deal_id if transport.order else transport.order_id_external,
+        order_no=order.deal_id if order else transport.order_id_external,
         car_name=transport.car_name or "—",
         car_autonum=transport.car_autonum or "—",
         driver_name=transport.driver_name or "—",
         phone_number=transport.phone_number or "—",
         box_count=transport.box_count or "—",
-        price=transport.price or "—",
+        price=price,
     )
