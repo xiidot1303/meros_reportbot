@@ -134,8 +134,9 @@ def handle_orders_change(orders_list: list):
                     ["status", "total_amount", "delivery_number", "delivery_date",
                      "sales_manager_name"])
 
-        # bulk_create(ignore_conflicts=True) leaves pks unset, so notify by deal_id
-        to_notify_deal_ids.extend(order.deal_id for order in to_create)
+        ## bulk_create(ignore_conflicts=True) leaves pks unset, so notify by deal_id
+        ## dont send new created orders notify by now
+        # to_notify_deal_ids.extend(order.deal_id for order in to_create)
 
         # enqueue only once the rows are actually written, otherwise the worker
         # can read the pre-update state (or a row that does not exist yet)
