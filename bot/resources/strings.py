@@ -451,6 +451,42 @@ Ma'lumot holati: <b>{generated_at}</b>""",
         "Задолженности загружаются..."
     ]
 
+    payment_overdue = [
+"""\u26A0\uFE0F <b>To'lov muddati {days} kunga o'tib ketdi!</b>
+<b>Qarzdorlik summasi:</b> <code>{debt_amount} so'm</code>
+<b>To'lov muddati:</b> <code>{expiry_date}</code>
+"""
+,
+"""\u26A0\uFE0F <b>Платёж просрочен на {days} {plural}!</b>
+<b>Сумма задолженности:</b> <code>{debt_amount} сум</code>
+<b>Срок оплаты:</b> <code>{expiry_date}</code>
+"""
+    ]
+
+    payment_due_soon = [
+"""\u23F3 <b>To'lov muddati 2 kundan keyin tugaydi.</b>
+<b>Qarzdorlik summasi:</b> <code>{debt_amount} so'm</code>
+<b>To'lov muddati:</b> <code>{expiry_date}</code>
+"""
+,
+"""\u23F3 <b>Срок оплаты истекает через 2 дня.</b>
+<b>Сумма задолженности:</b> <code>{debt_amount} сум</code>
+<b>Срок оплаты:</b> <code>{expiry_date}</code>
+"""
+    ]
+
+    payment_debt_order_info = [
+"""
+Buyurtma raqami: <code>{deal_id}</code>
+TTN raqami: <code>{delivery_number}</code>
+"""
+,
+"""
+Номер заказа: <code>{deal_id}</code>
+Номер ТТН: <code>{delivery_number}</code>
+"""
+    ]
+
     payment_received = [
 """\U0001F4B0 <b>To'lovingiz qabul qilindi!</b>
 <b>Summa:</b> <code>{amount}</code>

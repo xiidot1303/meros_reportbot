@@ -2,6 +2,7 @@ from bot.resources.strings import Strings
 from app.models import Order, OrderTransport
 from bot.models import Bot_user, Cabinet
 from app.services import *
+from bot.utils.dates import russian_days_plural
 
 
 def _format_date(value) -> str:
@@ -128,3 +129,50 @@ def order_transport_string(transport: OrderTransport, bot_user: Bot_user = None)
         box_count=transport.box_count or "—",
         price=price,
     )
+
+
+def payment_debt_string(kind, days_overdue, debt, order: Order = None, user_id=None) -> str:
+    """The alert for one overdue (or nearly overdue) debt row.
+
+    The order block is filled from the local `Order` when we have it, since the
+    debts endpoint only knows the deal id and the TTN. An order we have never
+    synced still gets an alert — the debt itself is the point of the message.
+    """
+    words = Strings(user_id=user_id)
+
+    debt_amount = debt.get("debt_amount")
+    try:
+        # whole sums, like every other amount the bot shows
+        debt_amount_text = format_number(round(float(debt_amount)))
+    except (TypeError, ValueError):
+        debt_amount_text = str(debt_amount or "—")
+
+    if kind == "overdue":
+        header = words.payment_overdue.format(
+            days=days_overdue,
+            plural=russian_days_plural(days_overdue),
+            debt_amount=debt_amount_text,
+            expiry_date=debt.get("expiry_date") or "—",
+        )
+    else:
+        header = words.payment_due_soon.format(
+            debt_amount=debt_amount_text,
+            expiry_date=debt.get("expiry_date") or "—",
+        )
+
+    if order:
+        body = words.order_info.format(
+            deal_id=order.deal_id or debt.get("deal_id") or "—",
+            delivery_number=order.delivery_number or debt.get("delivery_number") or "—",
+            delivery_date=_delivery_date(order),
+            sales_manager_name=order.sales_manager_name or "—",
+            total_amount=format_number(order.total_amount),
+        )
+    else:
+        # the order was never synced locally — show what the debts row carries
+        body = words.payment_debt_order_info.format(
+            deal_id=debt.get("deal_id") or "—",
+            delivery_number=debt.get("delivery_number") or "—",
+        )
+
+    return f"{header}{body}"

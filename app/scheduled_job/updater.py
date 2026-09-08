@@ -1,6 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import register_events, DjangoJobStore
-from app.scheduled_job import smartup_job, soliq_job, price_job
+from app.scheduled_job import smartup_job, soliq_job, price_job, debt_job
 from bot.scheduled_job import mailing
 from bot.services.redis_service import save_langs_to_redis
 from asgiref.sync import async_to_sync
@@ -31,6 +31,11 @@ class jobs:
     scheduler.add_job(
         price_job.sync_prices,
         'interval', minutes=10)
+
+    # overdue-payment alerts go out once a day, in the early afternoon
+    scheduler.add_job(
+        debt_job.notify_overdue_payments,
+        'cron', hour=14, minute=0, name='notify_overdue_payments')
 
     # bot
     scheduler.add_job(save_langs_to_redis, 'interval', minutes=20)
