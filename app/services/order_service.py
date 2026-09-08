@@ -10,6 +10,44 @@ from asgiref.sync import sync_to_async
 from app.services.smartup_service import SmartUpApiClient, ApiMethods
 
 
+# Statuses the client is told about; the rest of the lifecycle moves silently.
+NOTIFIABLE_STATUSES = ["B#W", "B#S", "B#V", "A"]
+
+
+def statuses_passed_through(previous_status, new_status):
+    """Every status an order went through to reach `new_status`, in order.
+
+    The sync polls every few minutes, so SmartUp can walk an order across two or
+    three statuses between two runs — Отгружен -> Доставлен -> Архив arrives
+    looking like a single jump to Архив. Comparing both ends against
+    `Order.STATUS_SEQUENCE` recovers the steps in between so the client hears
+    about each one.
+
+    Only forward movement is expanded. A status outside the sequence (a draft,
+    a cancel, an unknown code) or a backwards correction yields just the new
+    status, since there is no meaningful path to walk.
+    """
+    sequence = Order.STATUS_SEQUENCE
+
+    if new_status not in sequence:
+        # a cancel or an unrecognised code: report it as-is
+        return [new_status]
+
+    new_index = sequence.index(new_status)
+
+    if previous_status not in sequence:
+        # nothing dependable to measure from — announce only where it landed
+        return [new_status]
+
+    previous_index = sequence.index(previous_status)
+
+    if previous_index >= new_index:
+        # a backwards correction, not progress; do not replay the lifecycle
+        return [new_status]
+
+    return sequence[previous_index + 1:new_index + 1]
+
+
 @notify_on_exception
 def handle_orders_change(orders_list: list):
     incoming_ids = [item[0] for item in orders_list]
@@ -51,11 +89,15 @@ def handle_orders_change(orders_list: list):
                 have_to_update = True
             # check for status change
             if order_obj.status != status:
+                previous_status = order_obj.status
                 order_obj.status = status
                 have_to_update = True
-                # notify about status change if status is in
-                if status in ["B#W", "B#S", "B#V", "A"]:
-                    to_notify_ids.append(order_obj.id)
+                # The sync runs every few minutes, so an order can move through
+                # several statuses between two polls. Notify about each one it
+                # passed through, not only where it ended up.
+                for passed_status in statuses_passed_through(previous_status, status):
+                    if passed_status in NOTIFIABLE_STATUSES:
+                        to_notify_ids.append((order_obj.id, passed_status))
 
             # check for delivery date change — SmartUp can reschedule a shipment
             incoming_delivery_date = datetime.strptime(
@@ -112,11 +154,13 @@ def handle_orders_change(orders_list: list):
                 )
             )
 
-    # archived orders
+    # archived orders — an order that fell out of the feed entirely. Only the
+    # archive itself is announced here: the statuses it may have passed through
+    # off-feed are not knowable from its absence.
     for order in Order.objects.filter(~Q(deal_id__in=incoming_ids) & ~Q(status="A")):
         order.status = "A"
         to_update.append(order)
-        to_notify_ids.append(order.pk)
+        to_notify_ids.append((order.pk, "A"))
 
     # Perform bulk operations
     with transaction.atomic():
@@ -148,8 +192,12 @@ def handle_orders_change(orders_list: list):
 
 def _enqueue_status_notifications(
         order_ids: list, order_deal_ids: list, delivery_date_changes: list = None):
-    for order_id in order_ids:
-        notification_service.order_status_change_notify.delay(order_id=order_id)
+    # `status` rides along explicitly: the order row already holds the final
+    # status by the time the worker reads it, so an intermediate step it passed
+    # through cannot be recovered from the row itself.
+    for order_id, status in order_ids:
+        notification_service.order_status_change_notify.delay(
+            order_id=order_id, status=status)
     for deal_id in order_deal_ids:
         notification_service.order_status_change_notify.delay(
             order_deal_id=deal_id)

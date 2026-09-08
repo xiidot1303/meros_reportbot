@@ -44,6 +44,11 @@ class Order(models.Model):
         null=True, blank=True, max_length=255, verbose_name="Менеджер по продажам")
     total_amount = models.DecimalField(null=True, max_digits=12, decimal_places=0)
 
+    # The lifecycle an order walks in SmartUp, in order. Drafts and cancels sit
+    # outside it: "D" precedes the flow and "C" can happen from anywhere, so
+    # neither takes part in the passed-through calculation below.
+    STATUS_SEQUENCE = ["B#N", "B#E", "B#W", "B#S", "B#V", "A"]
+
     def get_status_label(code):
         for key, value in Order.STATUS_CHOICES:
             if key == code:

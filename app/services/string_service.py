@@ -43,14 +43,22 @@ def _status_header(status_code, lang) -> str:
     return Strings.order_status_changed_to[lang] + "<i>" + label + "</i>"
 
 
-def order_status_change_string(order: Order, bot_user: Bot_user = None) -> str:
+def order_status_change_string(order: Order, bot_user: Bot_user = None, status=None) -> str:
+    """The message announcing that an order reached a status.
+
+    `status` names the step to announce, which is not always the order's current
+    one: an order can cross several statuses between two syncs and each is
+    announced separately, while the row already holds the last of them.
+    """
     if bot_user:
         lang = bot_user.lang
     else:
         lang = 0
 
+    announced_status = status or order.status
+
     text = (
-        f"{_status_header(order.status, lang)}\n" \
+        f"{_status_header(announced_status, lang)}\n" \
         f"{Strings.order_info[lang]}".format(
             deal_id = order.deal_id or "—",
             delivery_number = order.delivery_number or "—",

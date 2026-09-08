@@ -77,19 +77,31 @@ def send_order_report_to_user(order: Order, bot_user: Bot_user):
 
 @app.task(name="app.services.notification_service.order_status_change_notify")
 @notify_on_exception(reraise=False)
-def order_status_change_notify(order_id=None, order_deal_id=None):
+def order_status_change_notify(order_id=None, order_deal_id=None, status=None):
+    """Tell the client an order reached a status.
+
+    `status` names the step being announced. It is passed explicitly because an
+    order can cross several statuses between two syncs: by the time this task
+    runs the row already holds the *final* status, so an intermediate step could
+    not be read back off the order. Callers that only care about where the order
+    stands now can omit it.
+    """
     if order_deal_id:
         order: Order = Order.objects.filter(deal_id = order_deal_id).first()
     else:
         order: Order = Order.objects.get(pk = order_id)
 
+    if not order:
+        return
+
+    notified_status = status or order.status
 
     for cabinet in Cabinet.objects.filter(client=order.client):
         bot_user: Bot_user = cabinet.bot_user
-        text = order_status_change_string(order, bot_user)
+        text = order_status_change_string(order, bot_user, status=notified_status)
         # send notification to user
         send_newsletter(bot_user.user_id, text)
-        if order.status == "A":
+        if notified_status == "A":
             send_order_report_to_user(order, bot_user)
 
 
