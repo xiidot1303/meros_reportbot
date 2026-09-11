@@ -4,7 +4,7 @@ from app.utils import format_number
 
 
 async def order_history_string(context: CustomContext, client: Client):
-    orders = Order.objects.filter(client=client)
+    orders = Order.objects.filter(client=client).exclude(status='A').order_by('-delivery_date')
     if not await orders.aexists():
         return context.words.no_orders_found
 
