@@ -2,6 +2,7 @@ from bot.bot import *
 import asyncio
 from bot.models import *
 from app.models import Client
+from app.services.debt_service import client_deferment_days
 from app.services.smartup_service import SmartUpApiClient, ApiMethods
 from bot.services.string_service import debts_history_string, debts_history_rich_html
 
@@ -17,6 +18,8 @@ async def _client_debts(update: Update, context: CustomContext):
             context=context,
             chat_id=update.effective_chat.id,
             client_external_id=client.external_id,
+            # SmartUp's expiry_date is the base date; the deferment makes it the due date
+            deferment_days=client_deferment_days(client),
         )
     )
 
@@ -29,12 +32,13 @@ async def _client_debts(update: Update, context: CustomContext):
     return ConversationHandler.END
 
 
-async def _send_client_debts_in_background(context: CustomContext, chat_id: int, client_external_id: str):
+async def _send_client_debts_in_background(context: CustomContext, chat_id: int, client_external_id: str,
+                                           deferment_days: int = 0):
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
 
     smartup_client = SmartUpApiClient(ApiMethods.debts_list)
     debts = await asyncio.to_thread(smartup_client.get_debts_by_client, client_external_id)
-    rich_tables = await debts_history_rich_html(context, debts)
+    rich_tables = await debts_history_rich_html(context, debts, deferment_days)
 
     if rich_tables:
         try:
@@ -56,7 +60,7 @@ async def _send_client_debts_in_background(context: CustomContext, chat_id: int,
         except Exception:
             pass
 
-    text_messages = await debts_history_string(context, debts)
+    text_messages = await debts_history_string(context, debts, deferment_days)
     for i, text in enumerate(text_messages):
         is_last = i == len(text_messages) - 1
         await context.bot.send_message(

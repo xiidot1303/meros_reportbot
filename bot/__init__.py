@@ -24,6 +24,7 @@ class NewsletterUpdate:
     document: Optional[object] = None
     document_name: Optional[str] = None
     location: Optional[dict] = None
+    rich_message: Optional[dict] = None
     reply_markup: Optional[ReplyKeyboardMarkup] = None
     pin_message: bool = False
 

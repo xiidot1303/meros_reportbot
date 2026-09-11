@@ -18,6 +18,7 @@ class NewsletterView(View):
         inline_buttons = data.get('inline_buttons', [])
         keyboard_buttons = data.get('keyboard_buttons', [])
         location = data.get('location', None)
+        rich_message = data.get('rich_message', None)
         document = data.get('document')
         document_name = data.get('document_name')
         document_bytes = None
@@ -34,6 +35,7 @@ class NewsletterView(View):
                     text=text,
                     reply_markup=reply_markup,
                     location=location,
+                    rich_message=rich_message,
                     document=document_bytes,
                     document_name=document_name,
                 ))

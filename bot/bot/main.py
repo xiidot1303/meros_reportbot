@@ -82,13 +82,29 @@ async def feedback(update: Update, context: CustomContext):
 async def newsletter_update(update: NewsletterUpdate, context: CustomContext):
     bot = context.bot
     if not (update.photo or update.video or update.document):
-        # send text message
-        message = await bot.send_message(
-            chat_id=update.user_id,
-            text=update.text,
-            reply_markup=update.reply_markup,
-            parse_mode=ParseMode.HTML
-        )
+        sent_rich = False
+        if update.rich_message:
+            # same path the debts menu uses; `text` stays the fallback
+            try:
+                payload = {
+                    "chat_id": update.user_id,
+                    "rich_message": update.rich_message,
+                }
+                if update.reply_markup:
+                    payload["reply_markup"] = update.reply_markup.to_dict()
+                message = await bot._post("sendRichMessage", data=payload)
+                sent_rich = True
+            except Exception:
+                sent_rich = False
+
+        if not sent_rich and update.text:
+            # send text message
+            message = await bot.send_message(
+                chat_id=update.user_id,
+                text=update.text,
+                reply_markup=update.reply_markup,
+                parse_mode=ParseMode.HTML
+            )
 
     if update.photo:
         # send photo

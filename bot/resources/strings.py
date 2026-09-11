@@ -446,6 +446,16 @@ Ma'lumot holati: <b>{generated_at}</b>""",
         "<b>Количество задолженностей:</b> <code>{count}</code>"
     ]
 
+    deferment_days_info = [
+        "<b>Kechiktirilgan to'lov muddati:</b> <code>{days} kun</code>",
+        "<b>Отсрочка платежа:</b> <code>{days} дн.</code>"
+    ]
+
+    payment_debts_alert_header = [
+        "\u26A0\uFE0F <b>Muddati o'tgan qarzdorliklar</b>",
+        "\u26A0\uFE0F <b>Просроченные задолженности</b>"
+    ]
+
     debts_loading = [
         "Qarzdorliklar yuklanmoqda...",
         "Задолженности загружаются..."

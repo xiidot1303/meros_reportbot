@@ -2,6 +2,7 @@ from bot.resources.strings import Strings
 from app.models import Order, OrderTransport
 from bot.models import Bot_user, Cabinet
 from app.services import *
+from app.services.debt_service import due_date
 from bot.utils.dates import russian_days_plural
 
 
@@ -139,14 +140,19 @@ def order_transport_string(transport: OrderTransport, bot_user: Bot_user = None)
     )
 
 
-def payment_debt_string(kind, days_overdue, debt, order: Order = None, user_id=None) -> str:
+def payment_debt_string(kind, days_overdue, debt, order: Order = None, user_id=None,
+                        deferment_days: int = 0) -> str:
     """The alert for one overdue (or nearly overdue) debt row.
 
     The order block is filled from the local `Order` when we have it, since the
     debts endpoint only knows the deal id and the TTN. An order we have never
     synced still gets an alert — the debt itself is the point of the message.
+
+    `deferment_days` shifts SmartUp's `expiry_date` onto the real due date; see
+    `app.services.debt_service.due_date`.
     """
     words = Strings(user_id=user_id)
+    expiry_date_text = due_date(debt.get("expiry_date"), deferment_days) or "—"
 
     debt_amount = debt.get("debt_amount")
     try:
@@ -160,12 +166,12 @@ def payment_debt_string(kind, days_overdue, debt, order: Order = None, user_id=N
             days=days_overdue,
             plural=russian_days_plural(days_overdue),
             debt_amount=debt_amount_text,
-            expiry_date=debt.get("expiry_date") or "—",
+            expiry_date=expiry_date_text,
         )
     else:
         header = words.payment_due_soon.format(
             debt_amount=debt_amount_text,
-            expiry_date=debt.get("expiry_date") or "—",
+            expiry_date=expiry_date_text,
         )
 
     if order:
@@ -184,3 +190,54 @@ def payment_debt_string(kind, days_overdue, debt, order: Order = None, user_id=N
         )
 
     return f"{header}{body}"
+
+
+def payment_debts_rich_tables(alerts, deferment_days, user_id=None):
+    """The overdue-debt alert as the same table the debts menu renders.
+
+    `alerts` are the `(kind, days_overdue, debt)` triples
+    `debts_needing_alert` yields. The "Дни просрочки" column shows SmartUp's
+    raw `overdue_days` — counted from delivery, the same figure the debts menu
+    shows — so the client sees one consistent number in both places. The
+    deferment-corrected days decide *which* rows are alerted at all; the
+    header states the deferment so the two reconcile.
+    """
+    from bot.services.string_service import build_debts_rich_tables
+
+    words = Strings(user_id=user_id)
+
+    rows = []
+    total_amount = 0.0
+    for _kind, _days_overdue, debt in alerts:
+        raw_amount = debt.get("debt_amount")
+        try:
+            amount = float(raw_amount)
+            total_amount += amount
+            amount_text = format_number(round(amount, 2))
+        except (TypeError, ValueError):
+            amount_text = str(raw_amount or "—")
+
+        rows.append([
+            str(due_date(debt.get("expiry_date"), deferment_days) or "—"),
+            amount_text,
+            str(debt.get("overdue_days") if debt.get("overdue_days") is not None else "—"),
+            str(debt.get("delivery_number") or "—"),
+        ])
+
+    if not rows:
+        return []
+
+    summary_html = (
+        f"{words.payment_debts_alert_header}"
+        + "<br><br>"
+        + f"{words.deferment_days_info}".format(days=deferment_days)
+        + "<br>"
+        + f"{words.total_debt_amount}".format(
+            amount=format_number(round(total_amount, 2))
+        )
+        + "<br>"
+        + f"{words.total_debt_rows}".format(count=len(rows))
+        + "<br><br>"
+    )
+
+    return build_debts_rich_tables(rows, total_amount, summary_html)

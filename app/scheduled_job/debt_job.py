@@ -2,16 +2,23 @@
 
 Runs once a day at 14:00. For every client with a linked cabinet it pulls the
 current debt list from SmartUp, corrects `overdue_days` by the client's payment
-deferment (see `app.services.debt_service`), and messages the client about each
-row that is overdue or two days from falling due.
+deferment (see `app.services.debt_service`) and splits the result in two:
+
+* rows already past their due date go out as one rich table, the same table
+  the debts menu renders;
+* a row two days from falling due gets its own message instead — a heads-up
+  about a single payment reads better as prose than as a one-row table.
 """
 
 from app.models import Order
-from app.services.debt_service import debts_needing_alert
+from app.services.debt_service import client_deferment_days, debts_needing_alert
 from app.services.error_service import notify_on_exception, report_exception
-from app.services.notification_service import send_newsletter
+from app.services.notification_service import (
+    send_newsletter,
+    send_newsletter_rich_message,
+)
 from app.services.smartup_service import ApiMethods, SmartUpApiClient
-from app.services.string_service import payment_debt_string
+from app.services.string_service import payment_debt_string, payment_debts_rich_tables
 from bot.models import Cabinet
 
 
@@ -50,11 +57,30 @@ def _notify_client_debts(api_client: SmartUpApiClient, client):
     if not bot_users:
         return
 
-    for kind, days_overdue, debt in debts_needing_alert(debts, client):
-        order = _find_order(debt)
-        for bot_user in bot_users:
+    alerts = list(debts_needing_alert(debts, client))
+    if not alerts:
+        return
+
+    overdue = [alert for alert in alerts if alert[0] == "overdue"]
+    due_soon = [alert for alert in alerts if alert[0] == "due_soon"]
+
+    deferment_days = client_deferment_days(client)
+    for bot_user in bot_users:
+        # rendered per user, since both forms are built in their own language
+        if overdue:
+            for html in payment_debts_rich_tables(
+                overdue, deferment_days, user_id=bot_user.user_id
+            ):
+                send_newsletter_rich_message(bot_user.user_id, html)
+
+        for kind, days_overdue, debt in due_soon:
             text = payment_debt_string(
-                kind, days_overdue, debt, order=order, user_id=bot_user.user_id
+                kind,
+                days_overdue,
+                debt,
+                order=_find_order(debt),
+                user_id=bot_user.user_id,
+                deferment_days=deferment_days,
             )
             send_newsletter(bot_user.user_id, text)
 

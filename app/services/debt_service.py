@@ -6,7 +6,13 @@ subtracted before the number means anything. Everything here works on that
 corrected figure.
 """
 
+from datetime import datetime, timedelta
+
 from app.models import Client
+
+
+# What SmartUp's `expiry_date` looks like on the wire.
+_EXPIRY_DATE_FORMATS = ("%d.%m.%Y", "%Y-%m-%d")
 
 
 # How many days ahead of the due date the client gets a heads-up.
@@ -25,6 +31,27 @@ def client_deferment_days(client: Client) -> int:
     if client.secondary_deferment_days is not None:
         return client.secondary_deferment_days
     return 0
+
+
+def due_date(expiry_date, deferment_days: int):
+    """The date the payment actually falls due, as a display string.
+
+    SmartUp's `expiry_date` is the delivery/base date, not the deadline — the
+    client's deferment has to be added before it means anything, exactly as
+    `overdue_days` has it subtracted. A value in an unexpected shape is handed
+    back untouched rather than dropped, since the row is still worth showing.
+    """
+    if not expiry_date:
+        return expiry_date
+
+    for fmt in _EXPIRY_DATE_FORMATS:
+        try:
+            parsed = datetime.strptime(str(expiry_date), fmt).date()
+        except (TypeError, ValueError):
+            continue
+        return (parsed + timedelta(days=deferment_days or 0)).strftime("%d.%m.%Y")
+
+    return expiry_date
 
 
 def parse_debt_row(row):

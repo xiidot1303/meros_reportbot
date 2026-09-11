@@ -22,6 +22,26 @@ def send_newsletter(user_id, text):
     )
     response.raise_for_status()
 
+
+def send_newsletter_rich_message(user_id, html, text=None):
+    """Send a rich-message table, the way the debts menu does.
+
+    `text` is the plain-HTML fallback the bot falls back to when Telegram
+    refuses the rich message.
+    """
+    payload = {
+        "user_id": user_id,
+        "rich_message": {"html": html},
+    }
+    if text:
+        payload["text"] = text
+    response = requests.post(
+        url=f"{NEWSLETTER_URL}/send-newsletter/",
+        json=payload
+    )
+    response.raise_for_status()
+
+
 def send_newsletter_with_document(user_id, document, document_name="report.xlsx", text=None):
     payload = {
         "user_id": user_id,
