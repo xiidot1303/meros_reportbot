@@ -18,6 +18,7 @@ import asyncio
 import html
 import io
 import logging
+import time
 
 from bot.bot import *
 from bot.services.admin_service import is_admin
@@ -34,8 +35,43 @@ MAX_FILE_BYTES = 10 * 1024 * 1024
 # reported, but a 4096-character message cannot hold hundreds of them.
 MAX_LISTED_NOT_FOUND = 30
 
-# user_data flag, so one admin cannot start a second run over their first
+# `user_data` is persisted by DjangoPersistence, so this flag outlives a
+# restart. A run killed mid-flight (deploy, watchdog reload, `Application.stop`
+# cancelling its tasks) would therefore wedge the command permanently. The
+# start time is stored alongside it so the lock can expire instead — see
+# `_lock_state`.
 RUNNING_FLAG = "update_phones_running"
+RUNNING_SINCE = "update_phones_started_at"
+
+# A real run is export (up to 5 min) plus batched imports. Past this, the flag
+# is assumed to be a leftover rather than a live run.
+STALE_LOCK_SECONDS = 30 * 60
+
+
+def _lock_state(context: CustomContext):
+    """Is a run in progress, and is that claim still believable?
+
+    Returns `(running, stale)`. `stale` means the flag is set but too old to
+    be a live run — the previous one died without clearing it.
+    """
+    if not context.user_data.get(RUNNING_FLAG):
+        return False, False
+
+    started_at = context.user_data.get(RUNNING_SINCE)
+    if not started_at:
+        # set by an older build that stored no timestamp; never trust it
+        return True, True
+    return True, (time.time() - started_at) > STALE_LOCK_SECONDS
+
+
+def _acquire_lock(context: CustomContext):
+    context.user_data[RUNNING_FLAG] = True
+    context.user_data[RUNNING_SINCE] = time.time()
+
+
+def _release_lock(context: CustomContext):
+    context.user_data[RUNNING_FLAG] = False
+    context.user_data.pop(RUNNING_SINCE, None)
 
 
 async def ask_file(update: Update, context: CustomContext):
@@ -48,13 +84,23 @@ async def ask_file(update: Update, context: CustomContext):
         )
         return ConversationHandler.END
 
-    if context.user_data.get(RUNNING_FLAG):
+    running, stale = _lock_state(context)
+    if running and not stale:
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=context.words.update_phones_already_running,
             parse_mode=ParseMode.HTML,
         )
         return ConversationHandler.END
+
+    if stale:
+        # the previous run never reported back; say so and let this one through
+        _release_lock(context)
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=context.words.update_phones_stale_lock,
+            parse_mode=ParseMode.HTML,
+        )
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -65,6 +111,8 @@ async def ask_file(update: Update, context: CustomContext):
 
 
 async def cancel(update: Update, context: CustomContext):
+    # doubles as the manual way out of a wedged lock
+    _release_lock(context)
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=context.words.update_phones_cancelled,
@@ -106,7 +154,7 @@ async def get_file(update: Update, context: CustomContext):
     telegram_file = await document.get_file()
     file_bytes = bytes(await telegram_file.download_as_bytearray())
 
-    context.user_data[RUNNING_FLAG] = True
+    _acquire_lock(context)
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=context.words.update_phones_started,
@@ -156,6 +204,14 @@ async def _run_update(context: CustomContext, chat_id, file_bytes):
             text=context.words.update_phones_bad_format,
             parse_mode=ParseMode.HTML,
         )
+    except asyncio.CancelledError:
+        # CancelledError is a BaseException, so it used to slip past the
+        # `except Exception` below and the admin was told nothing at all.
+        # `Application.stop()` cancels outstanding create_task tasks, so this
+        # is what a deploy or a watchdog reload mid-run looks like.
+        logger.warning("/update_phones cancelled mid-run")
+        await _notify_interrupted(context, chat_id)
+        raise
     except Exception as exc:
         logger.exception("/update_phones failed")
         await context.bot.send_message(
@@ -164,8 +220,30 @@ async def _run_update(context: CustomContext, chat_id, file_bytes):
                 error=html.escape(str(exc))[:500] or type(exc).__name__),
             parse_mode=ParseMode.HTML,
         )
+    except BaseException:
+        # anything else that is not an Exception (e.g. a hard kill path) still
+        # must not leave the admin staring at a silent chat
+        logger.exception("/update_phones died")
+        await _notify_interrupted(context, chat_id)
+        raise
     finally:
-        context.user_data[RUNNING_FLAG] = False
+        _release_lock(context)
+
+
+async def _notify_interrupted(context: CustomContext, chat_id):
+    """Tell the admin the run stopped early. Never raises.
+
+    Called while an exception is propagating — often a cancellation — so a
+    failure to send here must not replace the original one.
+    """
+    try:
+        await asyncio.shield(context.bot.send_message(
+            chat_id=chat_id,
+            text=context.words.update_phones_interrupted,
+            parse_mode=ParseMode.HTML,
+        ))
+    except Exception:
+        logger.warning("could not report interruption", exc_info=True)
 
 
 async def _report_progress(context: CustomContext, chat_id, queue):
@@ -196,6 +274,22 @@ async def _report_progress(context: CustomContext, chat_id, queue):
 async def _send_result(context: CustomContext, chat_id, result):
     """The summary the admin actually reads."""
     not_found = result["not_found"]
+
+    if result["failed_batches"] and not result["updated"]:
+        # nothing was written — a success headline with "updated: 0" underneath
+        # reads as "done" and hides a total failure
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=context.words.update_phones_all_failed.format(
+                count=result["failed_batches"],
+                total=result["total"],
+                not_found=len(not_found),
+            ),
+            parse_mode=ParseMode.HTML,
+            reply_markup=await main_menu_keyboard(context),
+        )
+        return
+
     text = context.words.update_phones_done.format(
         total=result["total"],
         updated=result["updated"],
