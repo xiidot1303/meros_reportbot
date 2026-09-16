@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 import signal
 import uvicorn
 import asyncio
-from bot.control.updater import application
+from bot.control.updater import application, on_startup
 from config import BOT_PORT as PORT
 
 # This function will be called when a shutdown signal is received
@@ -23,6 +23,7 @@ async def serve():
     # await server.serve()
     async with application:
         await application.start()
+        await on_startup()
         await server.serve()
         await application.stop()
 

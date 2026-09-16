@@ -13,7 +13,7 @@ from bot.resources.conversationList import *
 
 from bot.bot import (
     main, login, reconciliation_act, cabinet, orders, facturas, feedback, staff,
-    price_list
+    price_list, admin_phones
 )
 
 exceptions_for_filter_text = (~filters.COMMAND) & (
@@ -312,6 +312,30 @@ feedback_handler = ConversationHandler(
 )
 
 
+# admin-only bulk phone update; `is_admin` inside the callbacks is the real
+# guard — the scoped command menu only hides it from everyone else
+admin_phones_handler = ConversationHandler(
+    entry_points=[
+        CommandHandler("update_phones", admin_phones.ask_file)
+    ],
+    states={
+        GET_PHONES_FILE: [
+            MessageHandler(
+                filters.Document.ALL,
+                admin_phones.get_file
+            ),
+        ],
+    },
+    fallbacks=[
+        CommandHandler("cancel", admin_phones.cancel),
+        CommandHandler("start", main.main_menu),
+    ],
+    allow_reentry=True,
+    persistent=True,
+    name="admin_phones_handler",
+)
+
+
 # the ТТН search behind the feedback form's "find ТТН" button
 feedback_inline_query_handler = InlineQueryHandler(feedback.ttn_inline_query)
 
@@ -333,6 +357,7 @@ handlers = [
     price_list_handler,
     staff_handler,
     feedback_handler,
+    admin_phones_handler,
 
     feedback_inline_query_handler,
 

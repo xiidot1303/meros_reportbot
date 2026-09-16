@@ -49,3 +49,9 @@ ADMIN_GROUP_ID = int(os.environ.get("ADMIN_GROUP_ID") or 0)
 
 # Telegram account that receives unhandled exceptions from the `app` side
 DEVELOPER_USER_ID = int(os.environ.get("DEVELOPER_USER_ID") or 0)
+
+# Telegram accounts allowed to run admin-only bot commands (comma-separated ids)
+ADMIN_USER_IDS = [
+    int(part) for part in (os.environ.get("ADMIN_USER_IDS") or "").split(",")
+    if part.strip().lstrip("-").isdigit()
+]

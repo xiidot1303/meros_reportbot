@@ -31,3 +31,5 @@ ORACLE_PASSWORD=<oracle_password>
 
 ADMIN_GROUP_ID=<admin_group_id>
 DEVELOPER_USER_ID=<developer_telegram_user_id>
+# comma-separated Telegram user ids allowed to run admin-only bot commands
+ADMIN_USER_IDS=<admin_telegram_user_ids>

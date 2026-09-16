@@ -5,6 +5,13 @@ from app.services.error_service import notify_on_exception
 from config import SMARTUP_API_URL, SMARTUP_PASSWORD, SMARTUP_USERNAME
 
 
+# The legal_person export returns every person with their nested collections,
+# so it is far slower than the paged `:table` endpoints — give it room rather
+# than letting requests hang forever on a stalled connection.
+LEGAL_PERSON_EXPORT_TIMEOUT = 300
+LEGAL_PERSON_IMPORT_TIMEOUT = 120
+
+
 class ApiMethods:
     clients_list = "b/anor/mr/person/legal_person_list:table"
     reconciliation_act_report = "b/anor/rep/mkr/reconciliation_acts:run"
@@ -13,6 +20,8 @@ class ApiMethods:
     debts_list = "b/anor/mdeal/order/offset/offset_detail_list:table"
     order_report_template = "b/trade/tdeal/order/order_list:save_report_template"
     order_report_download = "b/anor/rep/mdeal/order_report:run"
+    legal_person_export = "b/anor/mxsx/mr/legal_person$export"
+    legal_person_import = "b/anor/mxsx/mr/legal_person$import"
 
 
 class SmartUpApiClient:
@@ -230,3 +239,38 @@ class SmartUpApiClient:
                 break
 
         return result
+
+    @notify_on_exception
+    def export_legal_persons(self):
+        """Every legal person, straight from SmartUp.
+
+        The empty JSON body is required — SmartUp rejects the request without
+        it. The response is large (all persons, each with nested `groups`,
+        `bank_accounts` and `rooms`), so callers work with it in memory and
+        must not persist it.
+        """
+        response = requests.post(
+            f"{SMARTUP_API_URL}/{ApiMethods.legal_person_export}",
+            json={},
+            auth=(self.username, self.password),
+            timeout=LEGAL_PERSON_EXPORT_TIMEOUT,
+        )
+        response.raise_for_status()
+        return response.json().get("legal_person", [])
+
+    @notify_on_exception
+    def import_legal_persons(self, legal_persons):
+        """Write persons back. `legal_persons` must already be import-shaped.
+
+        SmartUp treats this as a full record write, so every field has to carry
+        its exported value — see `build_import_payload`, which is the only
+        sanctioned way to build these dicts.
+        """
+        response = requests.post(
+            f"{SMARTUP_API_URL}/{ApiMethods.legal_person_import}",
+            json={"legal_person": legal_persons},
+            auth=(self.username, self.password),
+            timeout=LEGAL_PERSON_IMPORT_TIMEOUT,
+        )
+        response.raise_for_status()
+        return response.json() if response.content else {}
