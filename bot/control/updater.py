@@ -16,12 +16,22 @@ from bot.control.commands import set_bot_commands
 from bot.bot.main import error_handler
 from bot import *
 from python_telegram_bot_django_persistence.persistence import DjangoPersistence
+from telegram.request import HTTPXRequest
 
+
+request = HTTPXRequest(
+    connect_timeout=30,
+    read_timeout=30,
+    write_timeout=30,
+    connection_pool_size=20,
+    pool_timeout=30
+)
 
 persistence = PicklePersistence(filepath="persistencebot")
 context_types = ContextTypes(context=CustomContext)
 application = Application.builder().token(
-    BOT_API_TOKEN).context_types(context_types).persistence(DjangoPersistence()).build()
+    BOT_API_TOKEN).context_types(context_types).persistence(
+        DjangoPersistence()).request(request).build()
 
 # add handlers
 for handler in handlers[::-1]:
