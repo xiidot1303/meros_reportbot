@@ -11,7 +11,7 @@ from app.services.smartup_service import SmartUpApiClient, ApiMethods
 
 
 # Statuses the client is told about; the rest of the lifecycle moves silently.
-NOTIFIABLE_STATUSES = ["B#W", "B#S", "B#V", "A"]
+NOTIFIABLE_STATUSES = ["B#W", "B#S", "B#V", "A", "C"]
 
 
 def statuses_passed_through(previous_status, new_status):
@@ -46,6 +46,34 @@ def statuses_passed_through(previous_status, new_status):
         return [new_status]
 
     return sequence[previous_index + 1:new_index + 1]
+
+
+@notify_on_exception(reraise=False)
+def resolve_dropped_order_status(deal_id):
+    """Where an order went once it left the feed: "A" (archive) or "C" (cancel).
+
+    `get_orders` only returns live statuses, so a deal that stops appearing has
+    either been archived or cancelled, and the two mean opposite things to the
+    client — one gets a "completed" message with the накладная attached, the
+    other must not. SmartUp has no single endpoint that says which, so both
+    lists are asked in turn.
+
+    The archive is checked first because it is the ordinary ending and the far
+    more common one, which spares the second request in most cases. Returns
+    `None` when neither list knows the deal, and likewise when a lookup fails —
+    in both cases the caller leaves the order alone and a later sync retries it,
+    rather than announcing a state that was never confirmed. A failure here must
+    not abort the run: the rest of the batch still has updates to write.
+    """
+    archived = SmartUpApiClient(ApiMethods.archived_orders_list).deal_exists(deal_id)
+    if archived:
+        return "A"
+
+    cancelled = SmartUpApiClient(ApiMethods.cancelled_orders_list).deal_exists(deal_id)
+    if cancelled:
+        return "C"
+
+    return None
 
 
 @notify_on_exception
@@ -154,13 +182,22 @@ def handle_orders_change(orders_list: list):
                 )
             )
 
-    # archived orders — an order that fell out of the feed entirely. Only the
-    # archive itself is announced here: the statuses it may have passed through
+    # Orders that fell out of the feed entirely. Absence alone does not say
+    # which way they left — SmartUp drops both archived and cancelled deals —
+    # so each one is looked up in the two lists before its status is set. Only
+    # the final state is announced: the statuses it may have passed through
     # off-feed are not knowable from its absence.
-    for order in Order.objects.filter(~Q(deal_id__in=incoming_ids) & ~Q(status="A")):
-        order.status = "A"
+    dropped_orders = Order.objects.filter(
+        ~Q(deal_id__in=incoming_ids) & ~Q(status__in=["A", "C"]))
+    for order in dropped_orders:
+        status = resolve_dropped_order_status(order.deal_id)
+        if not status:
+            # neither list claims it — leave the order as it stands and pick it
+            # up on a later sync rather than guessing
+            continue
+        order.status = status
         to_update.append(order)
-        to_notify_ids.append((order.pk, "A"))
+        to_notify_ids.append((order.pk, status))
 
     # Perform bulk operations
     with transaction.atomic():

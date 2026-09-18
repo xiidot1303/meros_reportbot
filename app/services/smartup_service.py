@@ -17,6 +17,7 @@ class ApiMethods:
     reconciliation_act_report = "b/anor/rep/mkr/reconciliation_acts:run"
     orders_list = "b/trade/tdeal/order/order_list:table"
     archived_orders_list = "b/trade/tdeal/order/order_history_list:table"
+    cancelled_orders_list = "b/trade/tdeal/order/order_cancelled_list:table"
     debts_list = "b/anor/mdeal/order/offset/offset_detail_list:table"
     order_report_template = "b/trade/tdeal/order/order_list:save_report_template"
     order_report_download = "b/anor/rep/mdeal/order_report:run"
@@ -197,6 +198,31 @@ class SmartUpApiClient:
         )
         response = response.json()
         return response.get("data")
+
+    @notify_on_exception
+    def deal_exists(self, deal_id):
+        """Whether `deal_id` shows up in this client's list endpoint.
+
+        The archive and the cancelled list answer the same shape, so one lookup
+        serves either: `data` holds the row when the deal is there and is empty
+        when it is not. Only `deal_id` is selected — the caller is asking a
+        yes/no question, not reading the order back.
+        """
+        data = {
+            "p": {
+                "column": ["deal_id"],
+                "filter": ["deal_id", "=", str(deal_id)],
+                "sort": ["-deal_time"],
+                "offset": 0,
+                "limit": 10,
+            }
+        }
+
+        response = requests.post(
+            self.api_url, json=data, auth=(self.username, self.password)
+        )
+        response.raise_for_status()
+        return bool(response.json().get("data"))
 
     @notify_on_exception
     def get_debts_by_client(self, client_id):

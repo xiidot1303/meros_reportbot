@@ -30,6 +30,7 @@ _STATUS_HEADERS = {
     "B#S": "order_status_shipped",      # warehouse started assembling the goods
     "B#V": "order_status_delivered",    # warehouse finished preparing the goods
     "A": "order_status_archived",       # SmartUp/Soliq facturas were sent
+    "C": "order_status_cancelled",      # the deal was cancelled, not completed
 }
 
 

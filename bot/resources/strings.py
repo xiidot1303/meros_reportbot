@@ -173,6 +173,11 @@ Miqdor: <code>{total_amount} so'm</code>
         "✅ <b>ВАШ ЗАКАЗ ЗАВЕРШЁН!</b>\nСчёт-фактура прикреплена ниже \U0001F447"
     ]
 
+    order_status_cancelled = [
+        "\u274c <b>BUYURTMANGIZ BEKOR QILINDI</b>",
+        "\u274c <b>\u0412\u0410\u0428 \u0417\u0410\u041a\u0410\u0417 \u041e\u0422\u041c\u0415\u041d\u0401\u041d</b>"
+    ]
+
     order_price_changed = [
         "<b>🔄 BUYURTMA NARXI O'ZGARDI!</b>",
         "<b>🔄 СУММА ИЗМЕНИЛАСЬ!</b>"
