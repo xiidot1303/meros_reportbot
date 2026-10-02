@@ -11,7 +11,8 @@ from app.services.smartup_service import SmartUpApiClient, ApiMethods
 
 
 # Statuses the client is told about; the rest of the lifecycle moves silently.
-NOTIFIABLE_STATUSES = ["B#W", "B#S", "B#V", "A", "C"]
+# Cancels ("C") are recorded but deliberately not announced.
+NOTIFIABLE_STATUSES = ["B#W", "B#S", "B#V", "A"]
 
 
 def statuses_passed_through(previous_status, new_status):
@@ -197,7 +198,8 @@ def handle_orders_change(orders_list: list):
             continue
         order.status = status
         to_update.append(order)
-        to_notify_ids.append((order.pk, status))
+        if status in NOTIFIABLE_STATUSES:
+            to_notify_ids.append((order.pk, status))
 
     # Perform bulk operations
     with transaction.atomic():
