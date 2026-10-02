@@ -17,6 +17,8 @@ class Bot_user(models.Model):
     ]
     lang = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES, default=0, verbose_name='Язык')
     date = models.DateTimeField(db_index=True, null=True, auto_now_add=True, blank=True, verbose_name='Дата регистрации')
+    # set when the user confirms the disclaimer during login; refreshed on every re-login
+    disclaimer_accepted_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата подтверждения оговорки')
 
     def __str__(self) -> str:
         try:

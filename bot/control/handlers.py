@@ -28,6 +28,9 @@ login_handler = ConversationHandler(
         SELECT_LANG: [
             CallbackQueryHandler(login.get_lang, pattern="^(uz|ru)$")
         ],
+        ACCEPT_DISCLAIMER: [
+            CallbackQueryHandler(login.accept_disclaimer, pattern="^accept_disclaimer$")
+        ],
         GET_CONTACT_VIA_BUTTON: [
             MessageHandler(
                 filters.CONTACT,

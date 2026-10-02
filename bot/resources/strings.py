@@ -917,6 +917,25 @@ Fayl bo'lmasa, "{skip}" tugmasini bosing.""",
         ""
     ]
 
+    disclaimer = [
+        "<b>Muhim maʼlumot!</b>\n\n"
+        "Ushbu raqamli servis axborot-maʼlumot rejimida ishlaydi. U orqali taqdim "
+        "etiladigan barcha maʼlumotlar tanishish xarakteriga ega boʻlib, kompaniya "
+        "uchun hech qanday huquqiy majburiyatlarni keltirib chiqarmaydi. Servisdagi "
+        "maʼlumotlar va javoblar eʼtirozlar, daʼvo arizalari yoki boshqa huquqiy "
+        "talablarni taqdim etish uchun asos boʻla olmaydi. Har qanday tafovutlar "
+        "yuzaga kelgan taqdirda, kompaniyaning belgilangan tartibda "
+        "rasmiylashtirilgan rasmiy hujjatlari har doim ustuvorlikka ega boʻladi.",
+        "<b>Важная информация!</b>\n\n"
+        "Настоящий цифровой сервис работает в информационно-справочном режиме. "
+        "Все предоставляемые им данные носят ознакомительный характер и не влекут "
+        "за собой юридических обязательств для компании. Информация и ответы в "
+        "сервисе не могут служить основанием для предъявления претензий, исков или "
+        "иных правовых требований. В случае любых расхождений приоритет всегда "
+        "имеют официальные документы компании, оформленные в установленном порядке.",
+    ]
+    accept_disclaimer = ["✅ Tanishdim va tasdiqlayman", "✅ Ознакомлен(а) и подтверждаю"]
+
     _ = [
         "",
         ""

@@ -1,7 +1,39 @@
+from pathlib import Path
+
+from django.utils import timezone
+from telegram import InputFile
+
 from bot.bot import *
 from app.models import Client
 from bot.models import Bot_user
 from bot.services.access_service import accessible_clients_async
+
+
+DISCLAIMER_PDF = Path(__file__).resolve().parent.parent / "resources" / "disclaimer.pdf"
+
+
+async def _to_the_accepting_disclaimer(update: Update, context: CustomContext) -> int:
+    """Send the disclaimer PDF; login continues only once the user confirms it."""
+    if update.callback_query:
+        await update.callback_query.edit_message_reply_markup(None)
+    with open(DISCLAIMER_PDF, "rb") as document:
+        await bot_send_document(
+            update,
+            context,
+            document=InputFile(document, filename="MerosPharm_disclaimer.pdf"),
+            caption=context.words.disclaimer,
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            text=context.words.accept_disclaimer,
+                            callback_data="accept_disclaimer",
+                        )
+                    ]
+                ]
+            ),
+        )
+    return ACCEPT_DISCLAIMER
 
 
 async def _to_the_getting_contact_via_button(update: Update, context: CustomContext) -> int:
@@ -93,6 +125,14 @@ async def get_lang(update: Update, context: CustomContext) -> str:
     )
     bot_user.lang = lang
     await bot_user.asave()
+    return await _to_the_accepting_disclaimer(update, context)
+
+
+async def accept_disclaimer(update: Update, context: CustomContext) -> int:
+    """Record the user's confirmation of the disclaimer and ask for the contact."""
+    bot_user: Bot_user = await get_object_by_update(update)
+    bot_user.disclaimer_accepted_at = timezone.now()
+    await bot_user.asave(update_fields=["disclaimer_accepted_at"])
     return await _to_the_getting_contact_via_button(update, context)
 
 
