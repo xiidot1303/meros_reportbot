@@ -42,7 +42,6 @@ COLUMNS = [
     ("Производитель", "manufacturer", 32),
     ("Кол-во в коробке", "box_quant", 18),
     ("Цена", "price", 16),
-    ("Остаток", "quant", 14),
     ("Срок годности", "expiry_date", 16),
 ]
 
@@ -73,7 +72,7 @@ def _format_value(field, value):
         return None
     if field == "expiry_date":
         return value.strftime("%d.%m.%Y")
-    if field in ("box_quant", "price", "quant"):
+    if field in ("box_quant", "price"):
         return float(value)
     return value
 
