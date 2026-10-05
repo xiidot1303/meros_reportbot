@@ -173,10 +173,31 @@ class OrderTransport(models.Model):
 class ProductPrice(models.Model):
     """A price-list row synced from the SmartUp Oracle DB.
 
-    One row per (price type, product, warehouse card) — the price differs per
-    card, so the card grain must not be collapsed. Two price types are tracked:
-    113 (25% prepayment) and 114 (100% prepayment).
+    One row per (price type, product, card, warehouse) — the price differs per
+    card, so the card grain must not be collapsed, and stock is reported per
+    regional warehouse. Two price types are tracked: 113 (25% prepayment) and
+    114 (100% prepayment).
     """
+
+    # SmartUp warehouse per region; the price list is published per warehouse.
+    WAREHOUSE_SAMARKAND = 53
+    WAREHOUSE_TASHKENT = 51
+    WAREHOUSE_URGENCH = 59
+    WAREHOUSE_KARSHI = 73
+    WAREHOUSE_ANDIJAN = 341
+    WAREHOUSE_NAMANGAN = 68
+    WAREHOUSE_FERGANA = 56
+    # In the order the bot lists them.
+    WAREHOUSE_CHOICES = [
+        (WAREHOUSE_SAMARKAND, "Самарканд"),
+        (WAREHOUSE_TASHKENT, "Ташкент"),
+        (WAREHOUSE_URGENCH, "Ургенч"),
+        (WAREHOUSE_KARSHI, "Карши"),
+        (WAREHOUSE_ANDIJAN, "Андижан"),
+        (WAREHOUSE_NAMANGAN, "Наманган"),
+        (WAREHOUSE_FERGANA, "Фергана"),
+    ]
+    WAREHOUSE_IDS = tuple(warehouse_id for warehouse_id, _ in WAREHOUSE_CHOICES)
 
     PREPAYMENT_25 = 113
     PREPAYMENT_100 = 114
@@ -201,6 +222,8 @@ class ProductPrice(models.Model):
     box_quant = models.DecimalField(
         max_digits=18, decimal_places=3, null=True, blank=True, verbose_name="Количество в коробке")
     card_id = models.BigIntegerField(db_index=True, verbose_name="ID карточки")
+    warehouse_id = models.BigIntegerField(
+        db_index=True, choices=WAREHOUSE_CHOICES, verbose_name="Склад")
     card_code = models.CharField(
         max_length=64, null=True, blank=True, verbose_name="Код карточки")
     price = models.DecimalField(
@@ -216,8 +239,8 @@ class ProductPrice(models.Model):
         ordering = ["product_name", "price_type_id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["price_type_id", "product_id", "card_id"],
-                name="unique_product_price_row",
+                fields=["price_type_id", "product_id", "card_id", "warehouse_id"],
+                name="unique_product_price_warehouse_row",
             )
         ]
 
@@ -226,17 +249,18 @@ class ProductPrice(models.Model):
 
 
 class PriceListFile(models.Model):
-    """The currently published price-list xlsx for one price type.
+    """The currently published price-list xlsx for one warehouse and price type.
 
-    One row per price type. `telegram_file_id` caches Telegram's id for the
+    One row per (warehouse, price type). `telegram_file_id` caches Telegram's id for the
     uploaded document so repeat clicks resend it by reference instead of
     re-uploading ~1 MB every time; it is cleared whenever a new file is
     published, since the id belongs to the old file.
     """
 
     price_type_id = models.BigIntegerField(
-        unique=True, choices=ProductPrice.PRICE_TYPE_CHOICES,
-        verbose_name="ID типа цены")
+        choices=ProductPrice.PRICE_TYPE_CHOICES, verbose_name="ID типа цены")
+    warehouse_id = models.BigIntegerField(
+        choices=ProductPrice.WAREHOUSE_CHOICES, verbose_name="Склад")
     path = models.CharField(max_length=512, verbose_name="Путь к файлу")
     generated_at = models.DateTimeField(verbose_name="Дата формирования")
     row_count = models.IntegerField(default=0, verbose_name="Количество строк")
@@ -246,19 +270,29 @@ class PriceListFile(models.Model):
     class Meta:
         verbose_name = "Файл прайс-листа"
         verbose_name_plural = "Файлы прайс-листов"
-        ordering = ["price_type_id"]
+        ordering = ["warehouse_id", "price_type_id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["warehouse_id", "price_type_id"],
+                name="unique_price_list_file",
+            )
+        ]
 
     def __str__(self) -> str:
-        return f"{self.get_price_type_id_display()} ({self.generated_at:%d.%m.%Y %H:%M})"
+        return (
+            f"{self.get_warehouse_id_display()}, {self.get_price_type_id_display()} "
+            f"({self.generated_at:%d.%m.%Y %H:%M})"
+        )
 
     @property
     def exists(self) -> bool:
         return bool(self.path) and os.path.exists(self.path)
 
     @classmethod
-    def publish(cls, price_type_id, path, generated_at, row_count):
-        """Point this price type at a freshly built file, dropping the cached id."""
+    def publish(cls, warehouse_id, price_type_id, path, generated_at, row_count):
+        """Point this warehouse/type at a freshly built file, dropping the cached id."""
         return cls.objects.update_or_create(
+            warehouse_id=warehouse_id,
             price_type_id=price_type_id,
             defaults={
                 "path": path,

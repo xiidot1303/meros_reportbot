@@ -1,5 +1,8 @@
 """Sync the SmartUp price lists (25% / 100% prepayment) into `ProductPrice`.
 
+Rows are kept per regional warehouse (`ProductPrice.WAREHOUSE_CHOICES`), since
+each warehouse gets its own price list in the bot.
+
 Rows come straight from the Oracle DB ([app/services/oracle_service.py](app/services/oracle_service.py));
 this module only maps them onto the model and upserts in bulk. Rows that
 disappear from Oracle — a product that ran out of stock or lost its price —
@@ -25,7 +28,7 @@ PRICE_TYPE_IDS = (ProductPrice.PREPAYMENT_25, ProductPrice.PREPAYMENT_100)
 
 BULK_BATCH_SIZE = 500
 
-# Fields copied from the freshly fetched row onto an existing one.
+# Fields overwritten on an existing row when the upsert hits a conflict.
 SYNCED_FIELDS = [
     "price_type_name",
     "product_code",
@@ -38,7 +41,7 @@ SYNCED_FIELDS = [
     "expiry_date",
 ]
 
-# `updated_at` is stamped by hand because `auto_now` never fires on bulk_update.
+# `updated_at` is stamped by hand so every row of one sync shares a timestamp.
 UPDATE_FIELDS = SYNCED_FIELDS + ["updated_at"]
 
 
@@ -67,7 +70,8 @@ def build_price_object(row):
     price_type_id = row.get("price_type_id")
     product_id = row.get("product_id")
     card_id = row.get("card_id")
-    if price_type_id is None or product_id is None or card_id is None:
+    warehouse_id = row.get("warehouse_id")
+    if None in (price_type_id, product_id, card_id, warehouse_id):
         return None
 
     return ProductPrice(
@@ -79,6 +83,7 @@ def build_price_object(row):
         manufacturer=row.get("manufacturer"),
         box_quant=parse_decimal(row.get("box_quant")),
         card_id=int(card_id),
+        warehouse_id=int(warehouse_id),
         card_code=row.get("card_code"),
         price=parse_decimal(row.get("price")),
         quant=parse_decimal(row.get("quant")),
@@ -95,42 +100,42 @@ def update_prices_by_data(rows):
             continue
         # Oracle can return the same key twice if a product sits on several
         # cards with the same id; last one wins, as it would in the DB.
-        objects[(obj.price_type_id, obj.product_id, obj.card_id)] = obj
+        objects[(obj.price_type_id, obj.product_id, obj.card_id, obj.warehouse_id)] = obj
 
     if not objects:
         logger.warning("Price sync returned no usable rows; keeping existing prices")
         return 0, 0
 
-    existing = ProductPrice.objects.filter(price_type_id__in=PRICE_TYPE_IDS)
+    # only keys and ids — loading ~150k full model instances is needlessly heavy
     existing_map = {
-        (p.price_type_id, p.product_id, p.card_id): p for p in existing
+        (price_type_id, product_id, card_id, warehouse_id): price_id
+        for price_id, price_type_id, product_id, card_id, warehouse_id
+        in ProductPrice.objects.filter(price_type_id__in=PRICE_TYPE_IDS).values_list(
+            "id", "price_type_id", "product_id", "card_id", "warehouse_id")
     }
 
     now = timezone.now()
-    to_create = []
-    to_update = []
-    for key, obj in objects.items():
-        current = existing_map.get(key)
-        if current is None:
-            to_create.append(obj)
-            continue
-        for field in SYNCED_FIELDS:
-            setattr(current, field, getattr(obj, field))
-        current.updated_at = now
-        to_update.append(current)
+    for obj in objects.values():
+        obj.updated_at = now
 
+    created = sum(1 for key in objects if key not in existing_map)
+    updated = len(objects) - created
     stale_ids = [
-        price.id for key, price in existing_map.items() if key not in objects
+        price_id for key, price_id in existing_map.items() if key not in objects
     ]
 
+    # One INSERT ... ON CONFLICT DO UPDATE per batch. `bulk_update` was used
+    # here before, but it renders a CASE WHEN per field per row, and at ~150k
+    # rows (7 warehouses × 2 price types) a sync took many minutes.
+    rows_to_save = list(objects.values())
     with transaction.atomic():
-        for i in range(0, len(to_create), BULK_BATCH_SIZE):
+        for i in range(0, len(rows_to_save), BULK_BATCH_SIZE):
             ProductPrice.objects.bulk_create(
-                to_create[i:i + BULK_BATCH_SIZE], ignore_conflicts=True)
-
-        for i in range(0, len(to_update), BULK_BATCH_SIZE):
-            ProductPrice.objects.bulk_update(
-                to_update[i:i + BULK_BATCH_SIZE], UPDATE_FIELDS)
+                rows_to_save[i:i + BULK_BATCH_SIZE],
+                update_conflicts=True,
+                unique_fields=["price_type_id", "product_id", "card_id", "warehouse_id"],
+                update_fields=UPDATE_FIELDS,
+            )
 
         for i in range(0, len(stale_ids), BULK_BATCH_SIZE):
             ProductPrice.objects.filter(
@@ -138,12 +143,12 @@ def update_prices_by_data(rows):
 
     logger.info(
         "Price sync: %s created, %s updated, %s removed",
-        len(to_create), len(to_update), len(stale_ids),
+        created, updated, len(stale_ids),
     )
-    return len(to_create), len(to_update)
+    return created, updated
 
 
 def fetch_and_save_prices():
     """Pull both price lists from Oracle and mirror them into the local table."""
-    rows = OracleClient().get_product_prices(PRICE_TYPE_IDS)
+    rows = OracleClient().get_product_prices(PRICE_TYPE_IDS, ProductPrice.WAREHOUSE_IDS)
     return update_prices_by_data(rows)

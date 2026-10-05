@@ -1,8 +1,8 @@
 """Build the price-list xlsx files that the bot hands to clients.
 
 The price list is identical for every client — `ProductPrice` carries no client
-FK — so the files are generated once per sync (~2s each for ~20k rows) and every
-client is served the same file. Generating per click would rebuild an identical
+FK — so the files are generated once per sync, one per (warehouse, price type),
+and every client who picks that warehouse is served the same file. Generating per click would rebuild an identical
 workbook and, because openpyxl is CPU-bound, would block the bot's event loop
 for everyone else while it ran.
 
@@ -31,8 +31,9 @@ PRICE_LIST_DIR = "files/price_lists"
 # Whose price list this is — printed at the top of every sheet.
 COMPANY_NAME = "MerosPharm MCHJ"
 
-# Rows the info block occupies above the table (company, type, date, blank).
-HEADER_ROWS = 4
+# Rows the info block occupies above the table (company, warehouse, type, date,
+# blank).
+HEADER_ROWS = 5
 
 # Columns of the generated sheet, in order: (header, model field, width).
 COLUMNS = [
@@ -52,18 +53,19 @@ FIELDS = [field for _, field, _ in COLUMNS]
 DB_CHUNK_SIZE = 2000
 
 
-def price_list_filename(price_type_id, generated_at):
+def price_list_filename(warehouse_id, price_type_id, generated_at):
     """Timestamped name, so each sync produces a distinct file on disk."""
-    return f"price_list_{price_type_id}_{generated_at:%Y%m%d_%H%M%S}.xlsx"
+    return f"price_list_{warehouse_id}_{price_type_id}_{generated_at:%Y%m%d_%H%M%S}.xlsx"
 
 
-def client_facing_filename(price_type_id, generated_at):
+def client_facing_filename(warehouse_id, price_type_id, generated_at):
     """What the client sees in Telegram — dated, no internal ids."""
     label = {
         ProductPrice.PREPAYMENT_25: "25_predoplata",
         ProductPrice.PREPAYMENT_100: "100_predoplata",
     }.get(price_type_id, str(price_type_id))
-    return f"Прайс-лист_{label}_{generated_at:%d.%m.%Y}.xlsx"
+    warehouse = dict(ProductPrice.WAREHOUSE_CHOICES).get(warehouse_id, str(warehouse_id))
+    return f"Прайс-лист_{warehouse}_{label}_{generated_at:%d.%m.%Y}.xlsx"
 
 
 def _format_value(field, value):
@@ -76,40 +78,45 @@ def _format_value(field, value):
     return value
 
 
-def _write_info_header(sheet, price_type_id, generated_at):
-    """Company, price type and data age, above the table.
+def _write_info_header(sheet, warehouse_id, price_type_id, generated_at):
+    """Company, warehouse, price type and data age, above the table.
 
     Written as label/value pairs in columns A/B so the values stay readable and
     the block survives sorting or filtering the table below it.
     """
     price_type_label = dict(ProductPrice.PRICE_TYPE_CHOICES).get(
         price_type_id, str(price_type_id))
+    warehouse_label = dict(ProductPrice.WAREHOUSE_CHOICES).get(
+        warehouse_id, str(warehouse_id))
 
     sheet["A1"] = COMPANY_NAME
     sheet["A1"].font = Font(bold=True, size=14)
 
-    sheet["A2"] = "Тип цены:"
-    sheet["B2"] = price_type_label
+    sheet["A2"] = "Склад:"
+    sheet["B2"] = warehouse_label
 
-    sheet["A3"] = "Актуально на:"
-    sheet["B3"] = generated_at.strftime("%d.%m.%Y %H:%M")
+    sheet["A3"] = "Тип цены:"
+    sheet["B3"] = price_type_label
 
-    for row in (2, 3):
+    sheet["A4"] = "Актуально на:"
+    sheet["B4"] = generated_at.strftime("%d.%m.%Y %H:%M")
+
+    for row in (2, 3, 4):
         sheet[f"A{row}"].font = Font(bold=True)
         sheet[f"B{row}"].alignment = Alignment(horizontal="left")
 
 
-def build_price_list_file(price_type_id, generated_at=None):
-    """Write one price type's xlsx and return (path, row_count).
+def build_price_list_file(warehouse_id, price_type_id, generated_at=None):
+    """Write one warehouse/price type's xlsx and return (path, row_count).
 
-    Returns `(None, 0)` when the price type has no rows — a failed sync should
-    not replace a good file with an empty one.
+    Returns `(None, 0)` when there are no rows — a failed sync should not
+    replace a good file with an empty one.
     """
     generated_at = generated_at or timezone.now()
 
     rows = (
         ProductPrice.objects
-        .filter(price_type_id=price_type_id)
+        .filter(warehouse_id=warehouse_id, price_type_id=price_type_id)
         .order_by("product_name", "card_code")
         .values_list(*FIELDS)
     )
@@ -118,7 +125,7 @@ def build_price_list_file(price_type_id, generated_at=None):
     sheet = workbook.active
     sheet.title = "Прайс-лист"
 
-    _write_info_header(sheet, price_type_id, generated_at)
+    _write_info_header(sheet, warehouse_id, price_type_id, generated_at)
 
     # HEADER_ROWS leaves a blank spacer row, so the table starts right after it
     header_row = HEADER_ROWS + 1
@@ -137,7 +144,8 @@ def build_price_list_file(price_type_id, generated_at=None):
 
     if not count:
         logger.warning(
-            "Price type %s has no rows; skipping file generation", price_type_id)
+            "Warehouse %s, price type %s has no rows; skipping file generation",
+            warehouse_id, price_type_id)
         return None, 0
 
     # freeze the info block and the column headers, so scrolling keeps both
@@ -146,7 +154,8 @@ def build_price_list_file(price_type_id, generated_at=None):
         sheet.column_dimensions[sheet.cell(row=1, column=index).column_letter].width = width
 
     os.makedirs(PRICE_LIST_DIR, exist_ok=True)
-    path = os.path.join(PRICE_LIST_DIR, price_list_filename(price_type_id, generated_at))
+    path = os.path.join(
+        PRICE_LIST_DIR, price_list_filename(warehouse_id, price_type_id, generated_at))
 
     # Write to a temp file in the same directory, then rename onto the final
     # name: `os.replace` is atomic within a filesystem, so a reader sees either
@@ -193,7 +202,7 @@ def cleanup_old_price_lists(keep_paths):
 
 
 def generate_price_list_files():
-    """Rebuild both price lists, publish them, and drop the previous files.
+    """Rebuild every warehouse's price lists, publish them, and drop the old files.
 
     The published record (path, generation time, row count and the cached
     Telegram file_id) lives in `PriceListFile`, which is what the bot reads.
@@ -203,22 +212,25 @@ def generate_price_list_files():
     generated_at = timezone.now()
     current_paths = []
 
-    for price_type_id in (ProductPrice.PREPAYMENT_25, ProductPrice.PREPAYMENT_100):
-        path, count = build_price_list_file(price_type_id, generated_at)
-        if not path:
-            # Keep the previous file published rather than serving nothing.
-            existing = PriceListFile.objects.filter(price_type_id=price_type_id).first()
-            if existing and existing.exists:
-                current_paths.append(existing.path)
-            continue
+    for warehouse_id in ProductPrice.WAREHOUSE_IDS:
+        for price_type_id in (ProductPrice.PREPAYMENT_25, ProductPrice.PREPAYMENT_100):
+            path, count = build_price_list_file(warehouse_id, price_type_id, generated_at)
+            if not path:
+                # Keep the previous file published rather than serving nothing.
+                existing = PriceListFile.objects.filter(
+                    warehouse_id=warehouse_id, price_type_id=price_type_id).first()
+                if existing and existing.exists:
+                    current_paths.append(existing.path)
+                continue
 
-        PriceListFile.publish(
-            price_type_id=price_type_id,
-            path=path,
-            generated_at=generated_at,
-            row_count=count,
-        )
-        current_paths.append(path)
+            PriceListFile.publish(
+                warehouse_id=warehouse_id,
+                price_type_id=price_type_id,
+                path=path,
+                generated_at=generated_at,
+                row_count=count,
+            )
+            current_paths.append(path)
 
     cleanup_old_price_lists(current_paths)
     return current_paths

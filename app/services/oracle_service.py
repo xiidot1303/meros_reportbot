@@ -28,29 +28,36 @@ class OracleClient:
                 columns = [col[0].lower() for col in cursor.description]
                 return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-    def get_product_prices(self, price_type_ids):
+    def get_product_prices(self, price_type_ids, warehouse_ids):
         """Price-list rows for the given price types, joined with stock balances.
 
-        Returns one row per (price type, product, card) — price varies per card,
-        so the card grain is meaningful and must not be collapsed. Only products
-        with a positive balance across the tracked warehouses are included;
+        Returns one row per (price type, product, card, warehouse) — price
+        varies per card, so the card grain is meaningful and must not be
+        collapsed, and balances are kept apart per warehouse. Only products
+        with a positive balance in that warehouse are included;
         `expiry_date_id` comes back as an Oracle number in YYYYMMDD form.
         """
-        binds = {f"pt{i}": pt for i, pt in enumerate(price_type_ids)}
-        binds["filial_id"] = PRICE_LIST_FILIAL_ID
-        placeholders = ", ".join(f":{name}" for name in binds if name != "filial_id")
-        query = PRODUCT_PRICES_QUERY.format(price_type_ids=placeholders)
+        price_type_binds = {f"pt{i}": pt for i, pt in enumerate(price_type_ids)}
+        warehouse_binds = {f"wh{i}": wh for i, wh in enumerate(warehouse_ids)}
+        query = PRODUCT_PRICES_QUERY.format(
+            price_type_ids=", ".join(f":{name}" for name in price_type_binds),
+            warehouse_ids=", ".join(f":{name}" for name in warehouse_binds),
+        )
+        binds = {
+            **price_type_binds,
+            **warehouse_binds,
+            "filial_id": PRICE_LIST_FILIAL_ID,
+        }
         return self.execute_query(query, binds)
-
-# Warehouses whose balances count towards the price list.
-PRICE_LIST_WAREHOUSE_IDS = (51, 53, 59, 73, 341, 68, 56)
 
 # Prices are per branch; 28939 is the branch this cabinet reports on.
 PRICE_LIST_FILIAL_ID = 28939
 
-# One row per (price type, product, card). `MKW_DW_INVENTORY_BALANCES` holds
-# several rows per product/card/warehouse (one per batch), so balances are
-# summed to the product+card grain before joining onto the price rows.
+# One row per (price type, product, card, warehouse). `MKW_DW_INVENTORY_BALANCES`
+# holds several rows per product/card/warehouse (one per batch), so balances are
+# summed to the product+card+warehouse grain before joining onto the price rows.
+# Prices are per branch, not per warehouse, so each price row fans out to one
+# row per warehouse that stocks it.
 # `MD_PERSONS` and `MKW_CARDS` are LEFT JOINed: a product with no producer set
 # still belongs in the price list.
 PRODUCT_PRICES_QUERY = """
@@ -64,16 +71,18 @@ SELECT P."PRICE_TYPE_ID",
        P."CARD_ID",
        C."CARD_CODE",
        P."PRICE",
+       B."WAREHOUSE_ID",
        B."TOTAL_QUANT"        AS "QUANT",
        B."EXPIRY_DATE_ID"
   FROM "SMARTUP5X_ERP"."MKF_PRODUCT_PRICES" P
   JOIN (SELECT "PRODUCT_ID",
                "CARD_ID",
+               "WAREHOUSE_ID",
                SUM("QUANT")          AS "TOTAL_QUANT",
                MIN("EXPIRY_DATE_ID") AS "EXPIRY_DATE_ID"
           FROM "SMARTUP5X_ERP"."MKW_DW_INVENTORY_BALANCES"
-         WHERE "WAREHOUSE_ID" IN (%(warehouse_ids)s)
-         GROUP BY "PRODUCT_ID", "CARD_ID"
+         WHERE "WAREHOUSE_ID" IN ({warehouse_ids})
+         GROUP BY "PRODUCT_ID", "CARD_ID", "WAREHOUSE_ID"
         HAVING SUM("QUANT") > 0) B
     ON B."PRODUCT_ID" = P."PRODUCT_ID"
    AND B."CARD_ID"    = P."CARD_ID"
@@ -87,4 +96,4 @@ SELECT P."PRICE_TYPE_ID",
     ON C."CARD_ID" = P."CARD_ID"
  WHERE P."FILIAL_ID" = :filial_id
    AND P."PRICE_TYPE_ID" IN ({price_type_ids})
-""" % {"warehouse_ids": ", ".join(str(w) for w in PRICE_LIST_WAREHOUSE_IDS)}
+"""

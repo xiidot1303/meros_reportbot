@@ -229,11 +229,30 @@ Miqdor: <code>{total_amount} so'm</code>
         "\U0001F4C4 Счет-фактуры"
     ]
 
-    # price lists — the menu button, the type picker and the delivered file
+    # price lists — the menu button, the warehouse and type pickers and the
+    # delivered file
     price_list = [
         "\U0001F4B2 Narxlar ro'yxati",
         "\U0001F4B2 Прайс-лист"
     ]
+
+    price_list_warehouse_prompt = [
+"""\U0001F3EC <b>Omborni tanlang.</b>
+
+Qaysi ombor narxlar ro'yxati kerak?""",
+"""\U0001F3EC <b>Выберите склад.</b>
+
+Прайс-лист какого склада вам нужен?"""
+    ]
+
+    # warehouse names, keyed by region (see ProductPrice.WAREHOUSE_CHOICES)
+    warehouse_samarkand = ["Samarqand", "Самарканд"]
+    warehouse_tashkent = ["Toshkent", "Ташкент"]
+    warehouse_urgench = ["Urganch", "Ургенч"]
+    warehouse_karshi = ["Qarshi", "Карши"]
+    warehouse_andijan = ["Andijon", "Андижан"]
+    warehouse_namangan = ["Namangan", "Наманган"]
+    warehouse_fergana = ["Farg'ona", "Фергана"]
 
     price_list_type_prompt = [
 """\U0001F4B2 <b>Narxlar ro'yxati turini tanlang.</b>
@@ -262,10 +281,12 @@ Qaysi to'lov sharti bo'yicha narxlar kerak?""",
     price_list_document = [
 """\U0001F4B2 <b>{price_type}</b>
 
+Ombor: <b>{warehouse}</b>
 Tovarlar soni: <b>{count}</b>
 Ma'lumot holati: <b>{generated_at}</b>""",
 """\U0001F4B2 <b>{price_type}</b>
 
+Склад: <b>{warehouse}</b>
 Количество товаров: <b>{count}</b>
 Актуально на: <b>{generated_at}</b>"""
     ]

@@ -1,4 +1,4 @@
-n = 24
+n = 25
 (
     SELECT_LANG,
     GET_NAME,
@@ -24,4 +24,5 @@ n = 24
     SELECT_PRICE_TYPE,
     GET_PHONES_FILE,
     ACCEPT_DISCLAIMER,
+    SELECT_WAREHOUSE,
 ) = range(0, n)

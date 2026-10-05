@@ -202,11 +202,17 @@ price_list_handler = ConversationHandler(
         CallbackQueryHandler(main.price_list, pattern="^price_list$")
     ],
     states={
+        SELECT_WAREHOUSE: [
+            CallbackQueryHandler(
+                price_list.select_warehouse,
+                pattern="^price_warehouse_\\d+$"
+            )
+        ],
         SELECT_PRICE_TYPE: [
             CallbackQueryHandler(
                 price_list.send_price_list,
-                pattern="^price_type_\\d+$"
-            )
+                pattern="^price_type_\\d+_\\d+$"
+            ),
         ],
     },
     fallbacks=[

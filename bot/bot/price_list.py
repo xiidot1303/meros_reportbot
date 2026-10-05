@@ -1,6 +1,6 @@
-"""Hand the client a price-list xlsx.
+"""Hand the client a price-list xlsx for the warehouse they pick.
 
-The files themselves are built by the sync job
+The client picks a warehouse, then a price type. The files themselves are built by the sync job
 ([app/scheduled_job/price_job.py](app/scheduled_job/price_job.py)), so nothing
 here generates a workbook — this module only picks the right published file and
 sends it. The first send caches Telegram's `file_id`, and later clicks resend by
@@ -15,23 +15,81 @@ from bot.bot import *
 from app.models import PriceListFile, ProductPrice
 
 
-# callback_data prefix for the type picker
+# callback_data prefixes for the two pickers; the type picker's data also
+# carries the warehouse, as `price_type_<warehouse_id>_<price_type_id>`
+WAREHOUSE_PREFIX = "price_warehouse_"
 PRICE_TYPE_PREFIX = "price_type_"
 
+# `Strings` key for each warehouse's button, in ProductPrice.WAREHOUSE_CHOICES order
+WAREHOUSE_STRING_KEYS = {
+    ProductPrice.WAREHOUSE_SAMARKAND: "warehouse_samarkand",
+    ProductPrice.WAREHOUSE_TASHKENT: "warehouse_tashkent",
+    ProductPrice.WAREHOUSE_URGENCH: "warehouse_urgench",
+    ProductPrice.WAREHOUSE_KARSHI: "warehouse_karshi",
+    ProductPrice.WAREHOUSE_ANDIJAN: "warehouse_andijan",
+    ProductPrice.WAREHOUSE_NAMANGAN: "warehouse_namangan",
+    ProductPrice.WAREHOUSE_FERGANA: "warehouse_fergana",
+}
 
-async def _ask_price_type(update: Update, context: CustomContext):
-    """Entry point: which of the two price lists does the client want?"""
+
+def _warehouse_name(context: CustomContext, warehouse_id):
+    return getattr(context.words, WAREHOUSE_STRING_KEYS[warehouse_id])
+
+
+async def _ask_warehouse(update: Update, context: CustomContext):
+    """Entry point: which warehouse's price list does the client want?"""
     if update.callback_query:
         await update.callback_query.edit_message_reply_markup(None)
+
+    warehouse_buttons = [
+        InlineKeyboardButton(
+            text=_warehouse_name(context, warehouse_id),
+            callback_data=f"{WAREHOUSE_PREFIX}{warehouse_id}",
+        )
+        for warehouse_id in ProductPrice.WAREHOUSE_IDS
+    ]
+    # two per row keeps seven regions compact
+    buttons = [warehouse_buttons[i:i + 2] for i in range(0, len(warehouse_buttons), 2)]
+    buttons.append([InlineKeyboardButton(
+        text=context.words.main_menu,
+        callback_data="main_menu",
+    )])
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=context.words.price_list_warehouse_prompt,
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup(buttons),
+    )
+
+    return SELECT_WAREHOUSE
+
+
+async def select_warehouse(update: Update, context: CustomContext):
+    """Warehouse picked; ask for the price type."""
+    warehouse_id = int(update.callback_query.data.removeprefix(WAREHOUSE_PREFIX))
+    if warehouse_id not in WAREHOUSE_STRING_KEYS:
+        # a stale button for a warehouse we no longer list
+        return await _ask_warehouse(update, context)
+    return await _ask_price_type(update, context, warehouse_id)
+
+
+async def _ask_price_type(update: Update, context: CustomContext, warehouse_id):
+    """Which of the two price lists of this warehouse does the client want?"""
+    await update.callback_query.edit_message_reply_markup(None)
 
     buttons = [
         [InlineKeyboardButton(
             text=context.words.price_list_type_negotiated,
-            callback_data=f"{PRICE_TYPE_PREFIX}{ProductPrice.PREPAYMENT_25}",
+            callback_data=f"{PRICE_TYPE_PREFIX}{warehouse_id}_{ProductPrice.PREPAYMENT_25}",
         )],
         [InlineKeyboardButton(
             text=context.words.price_list_type_prepayment_100,
-            callback_data=f"{PRICE_TYPE_PREFIX}{ProductPrice.PREPAYMENT_100}",
+            callback_data=f"{PRICE_TYPE_PREFIX}{warehouse_id}_{ProductPrice.PREPAYMENT_100}",
+        )],
+        [InlineKeyboardButton(
+            text=context.words.back,
+            callback_data="price_list",
         )],
         [InlineKeyboardButton(
             text=context.words.main_menu,
@@ -50,28 +108,33 @@ async def _ask_price_type(update: Update, context: CustomContext):
 
 
 @sync_to_async
-def _get_price_list_file(price_type_id):
-    """The published file for this type, or None if it is missing on disk."""
-    record = PriceListFile.objects.filter(price_type_id=price_type_id).first()
+def _get_price_list_file(warehouse_id, price_type_id):
+    """The published file for this warehouse/type, or None if missing on disk."""
+    record = PriceListFile.objects.filter(
+        warehouse_id=warehouse_id, price_type_id=price_type_id).first()
     if not record or not record.exists:
         return None
     return record
 
 
 @sync_to_async
-def _cache_file_id(price_type_id, file_id):
+def _cache_file_id(warehouse_id, price_type_id, file_id):
     """Remember Telegram's id so the next click skips the upload."""
-    PriceListFile.objects.filter(price_type_id=price_type_id).update(
-        telegram_file_id=file_id)
+    PriceListFile.objects.filter(
+        warehouse_id=warehouse_id, price_type_id=price_type_id,
+    ).update(telegram_file_id=file_id)
 
 
 async def send_price_list(update: Update, context: CustomContext):
-    """Send the file for the picked type, uploading only when not yet cached."""
+    """Send the file for the picked warehouse/type, uploading only when not yet cached."""
     query = update.callback_query
     await query.edit_message_reply_markup(None)
 
-    price_type_id = int(query.data.removeprefix(PRICE_TYPE_PREFIX))
-    record = await _get_price_list_file(price_type_id)
+    warehouse_id, price_type_id = map(
+        int, query.data.removeprefix(PRICE_TYPE_PREFIX).split("_"))
+    record = None
+    if warehouse_id in WAREHOUSE_STRING_KEYS:
+        record = await _get_price_list_file(warehouse_id, price_type_id)
 
     if record is None:
         # No sync has completed yet, or the file vanished from disk.
@@ -93,6 +156,7 @@ async def send_price_list(update: Update, context: CustomContext):
 
     caption = context.words.price_list_document.format(
         price_type=record.get_price_type_id_display(),
+        warehouse=_warehouse_name(context, warehouse_id),
         count=record.row_count,
         # the file is up to one sync interval old; say so rather than implying
         # it is live
@@ -111,7 +175,7 @@ async def send_price_list(update: Update, context: CustomContext):
         return ConversationHandler.END
 
     if message and message.document and not record.telegram_file_id:
-        await _cache_file_id(price_type_id, message.document.file_id)
+        await _cache_file_id(warehouse_id, price_type_id, message.document.file_id)
 
     return ConversationHandler.END
 
@@ -126,7 +190,8 @@ async def _send_document(context: CustomContext, update: Update, record, caption
     from app.services.price_report_service import client_facing_filename
 
     chat_id = update.effective_chat.id
-    filename = client_facing_filename(record.price_type_id, record.generated_at)
+    filename = client_facing_filename(
+        record.warehouse_id, record.price_type_id, record.generated_at)
 
     if record.telegram_file_id:
         try:
@@ -138,7 +203,7 @@ async def _send_document(context: CustomContext, update: Update, record, caption
                 reply_markup=await main_menu_keyboard(context),
             )
         except Exception:
-            await _cache_file_id(record.price_type_id, None)
+            await _cache_file_id(record.warehouse_id, record.price_type_id, None)
 
     document = await asyncio.to_thread(_read_file, record.path, filename)
     return await context.bot.send_document(

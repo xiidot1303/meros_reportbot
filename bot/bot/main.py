@@ -12,7 +12,7 @@ from bot.bot.orders import _orders_list
 from bot.bot.facturas import _client_facturas
 from bot.bot.feedback import _ask_type
 from bot.bot.staff import _to_the_staff_list
-from bot.bot.price_list import _ask_price_type
+from bot.bot.price_list import _ask_warehouse
 
 
 async def start(update: Update, context: CustomContext):
@@ -68,7 +68,7 @@ async def client_facturas(update: Update, context: CustomContext):
 
 
 async def price_list(update: Update, context: CustomContext):
-    return await _ask_price_type(update, context)
+    return await _ask_warehouse(update, context)
 
 
 async def staff(update: Update, context: CustomContext):

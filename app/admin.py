@@ -31,13 +31,14 @@ class OrderTransportAdmin(admin.ModelAdmin):
 
 @admin.register(ProductPrice)
 class ProductPriceAdmin(admin.ModelAdmin):
-    list_display = ('product_code', 'product_name', 'manufacturer', 'price_type_id', 'price', 'quant', 'card_code', 'expiry_date', 'updated_at')
+    list_display = ('product_code', 'product_name', 'manufacturer', 'warehouse_id', 'price_type_id', 'price', 'quant', 'card_code', 'expiry_date', 'updated_at')
     search_fields = ('product_code', 'product_name', 'manufacturer', 'card_code', 'product_id')
-    list_filter = ('price_type_id', 'manufacturer', 'expiry_date')
+    list_filter = ('warehouse_id', 'price_type_id', 'manufacturer', 'expiry_date')
     readonly_fields = ('updated_at',)
 
 
 @admin.register(PriceListFile)
 class PriceListFileAdmin(admin.ModelAdmin):
-    list_display = ('price_type_id', 'row_count', 'generated_at', 'path', 'telegram_file_id')
-    readonly_fields = ('price_type_id', 'path', 'generated_at', 'row_count', 'telegram_file_id')
+    list_display = ('warehouse_id', 'price_type_id', 'row_count', 'generated_at', 'path', 'telegram_file_id')
+    list_filter = ('warehouse_id', 'price_type_id')
+    readonly_fields = ('warehouse_id', 'price_type_id', 'path', 'generated_at', 'row_count', 'telegram_file_id')
