@@ -33,6 +33,16 @@ def client_deferment_days(client: Client) -> int:
     return 0
 
 
+def alert_deferment_days(client: Client) -> int:
+    """The deferment the daily 14:00 debt alerts count against.
+
+    One day shorter than `client_deferment_days`, so the alerts run a day
+    ahead of the debts menu. Never below 0 — a debt can't fall due before
+    delivery.
+    """
+    return max(client_deferment_days(client) - 1, 0)
+
+
 def due_date(expiry_date, deferment_days: int):
     """The date the payment actually falls due, as a display string.
 
@@ -119,7 +129,7 @@ def debts_needing_alert(debts, client: Client):
     Yields `(kind, days_overdue, debt)` so the caller only has to pick the
     wording — the deferment arithmetic is already applied.
     """
-    deferment_days = client_deferment_days(client)
+    deferment_days = alert_deferment_days(client)
 
     for row in debts or []:
         debt = parse_debt_row(row)

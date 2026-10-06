@@ -2,7 +2,8 @@
 
 Runs once a day at 14:00. For every client with a linked cabinet it pulls the
 current debt list from SmartUp, corrects `overdue_days` by the client's payment
-deferment (see `app.services.debt_service`) and splits the result in two:
+deferment minus one day (see `alert_deferment_days` in
+`app.services.debt_service`) and splits the result in two:
 
 * rows already past their due date go out as one rich table, the same table
   the debts menu renders;
@@ -11,7 +12,7 @@ deferment (see `app.services.debt_service`) and splits the result in two:
 """
 
 from app.models import Order
-from app.services.debt_service import client_deferment_days, debts_needing_alert
+from app.services.debt_service import alert_deferment_days, debts_needing_alert
 from app.services.error_service import notify_on_exception, report_exception
 from app.services.notification_service import (
     send_newsletter,
@@ -64,7 +65,7 @@ def _notify_client_debts(api_client: SmartUpApiClient, client):
     overdue = [alert for alert in alerts if alert[0] == "overdue"]
     due_soon = [alert for alert in alerts if alert[0] == "due_soon"]
 
-    deferment_days = client_deferment_days(client)
+    deferment_days = alert_deferment_days(client)
     for bot_user in bot_users:
         # rendered per user, since both forms are built in their own language
         if overdue:
