@@ -349,6 +349,12 @@ admin_phones_handler = ConversationHandler(
 feedback_inline_query_handler = InlineQueryHandler(feedback.ttn_inline_query)
 
 
+# staff take a feedback with the button under its group message
+admin_feedback_take_handler = CallbackQueryHandler(
+    feedback.admin_take, pattern="^feedback_take_\\d+$"
+)
+
+
 # admins answer client feedback by replying to the group message with "@@@"
 admin_feedback_reply_handler = MessageHandler(
     filters.ChatType.GROUPS & filters.REPLY & (~filters.COMMAND),
@@ -372,5 +378,6 @@ handlers = [
 
     TypeHandler(type=NewsletterUpdate, callback=main.newsletter_update),
 
+    admin_feedback_take_handler,
     admin_feedback_reply_handler,
 ]

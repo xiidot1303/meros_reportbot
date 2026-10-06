@@ -91,8 +91,25 @@ class Feedback(models.Model):
         (OTHER, 'Другое'),
     ]
 
+    # where the feedback is in its handling: posted → a staff member takes it
+    # with the group button → answered with an @@@ reply
+    NEW = 'new'
+    IN_PROGRESS = 'in_progress'
+    ANSWERED = 'answered'
+    STATUS_CHOICES = [
+        (NEW, 'Новое'),
+        (IN_PROGRESS, 'На рассмотрении'),
+        (ANSWERED, 'Отвечено'),
+    ]
+
     bot_user = models.ForeignKey('Bot_user', null=True, blank=True, on_delete=models.CASCADE, verbose_name='Пользователь бота')
     client = models.ForeignKey('app.Client', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Клиент')
+    status = models.CharField(
+        max_length=16, choices=STATUS_CHOICES, default=NEW,
+        db_index=True, verbose_name='Статус')
+    taken_by = models.BigIntegerField(null=True, blank=True, verbose_name='Telegram ID сотрудника')
+    taken_by_name = models.CharField(max_length=256, null=True, blank=True, verbose_name='Взял в работу')
+    taken_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата взятия в работу')
     feedback_type = models.CharField(
         max_length=16, choices=TYPE_CHOICES, default=WAREHOUSE,
         db_index=True, verbose_name='Тип обращения')
@@ -113,6 +130,9 @@ class Feedback(models.Model):
     # message ids are per chat, so the pair is what identifies the message
     admin_chat_id = models.BigIntegerField(null=True, blank=True, verbose_name='ID группы админов')
     date = models.DateTimeField(db_index=True, null=True, auto_now_add=True, blank=True, verbose_name='Дата обращения')
+    # auto_now only fires for fields being saved — every asave(update_fields=…)
+    # on a Feedback must list it
+    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True, verbose_name='Дата изменения')
 
     class Meta:
         verbose_name = "Обращение"

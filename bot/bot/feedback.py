@@ -2,9 +2,12 @@ from bot.bot import *
 from bot.models import Cabinet, Feedback
 from bot.services.feedback_notifier import (
     mark_admin_message_answered,
+    mark_admin_message_in_progress,
+    notify_client_in_review,
     send_answer_to_client,
 )
 from bot.services.feedback_service import (
+    TAKE_CALLBACK_PREFIX,
     create_feedback,
     find_client_order,
     get_feedback_by_admin_message,
@@ -12,12 +15,18 @@ from bot.services.feedback_service import (
     save_answer,
     search_client_orders,
     strip_marker,
+    take_feedback,
 )
 from app.utils import format_number
 
 
 ADMIN_REPLY_SENT = "✅ Ответ отправлен клиенту."
 ADMIN_REPLY_NO_USER = "⚠️ Не удалось отправить ответ: клиент недоступен."
+ADMIN_TAKEN = "✅ Обращение взято в работу, клиент уведомлён."
+ADMIN_TAKEN_NO_USER = "✅ Обращение взято в работу. Клиент недоступен для уведомления."
+ADMIN_ALREADY_TAKEN = "Обращение уже взял в работу: {admin}."
+ADMIN_ALREADY_ANSWERED = "На это обращение уже ответили."
+ADMIN_FEEDBACK_NOT_FOUND = "Обращение не найдено."
 
 # the client sends one of these along with their feedback
 CLIENT_ATTACHMENTS = ("photo", "video", "document", "audio", "voice", "animation")
@@ -334,6 +343,40 @@ def _date(value):
 # admin side
 ###############################################################################
 
+def _admin_name(user):
+    return " ".join(filter(None, [user.first_name, user.last_name])) or user.username
+
+
+async def admin_take(update: Update, context: CustomContext):
+    """A staff member pressed "take" under a feedback in the admin group.
+
+    The first click wins: the group message is rewritten to show who took it
+    (which also drops the button) and the client is told it is under review.
+    Later clicks only get a popup saying who has it.
+    """
+    query = update.callback_query
+    feedback_id = int(query.data[len(TAKE_CALLBACK_PREFIX):])
+    admin = update.effective_user
+
+    feedback, taken = await take_feedback(
+        feedback_id, update.effective_chat.id, admin.id, _admin_name(admin))
+
+    if not feedback:
+        await query.answer(ADMIN_FEEDBACK_NOT_FOUND, show_alert=True)
+        return
+    if not taken:
+        await query.answer(
+            ADMIN_ALREADY_ANSWERED if feedback.status == Feedback.ANSWERED
+            else ADMIN_ALREADY_TAKEN.format(admin=feedback.taken_by_name or "—"),
+            show_alert=True,
+        )
+        return
+
+    await mark_admin_message_in_progress(feedback, context.bot)
+    delivered = await notify_client_in_review(feedback, context.bot)
+    await query.answer(ADMIN_TAKEN if delivered else ADMIN_TAKEN_NO_USER)
+
+
 async def admin_group_reply(update: Update, context: CustomContext):
     """An admin replied to a feedback message in the admin group.
 
@@ -362,13 +405,12 @@ async def admin_group_reply(update: Update, context: CustomContext):
         return
 
     admin = update.effective_user
-    admin_name = " ".join(filter(None, [admin.first_name, admin.last_name])) or admin.username
 
     feedback = await save_answer(
         feedback=feedback,
         answer=answer,
         admin_user_id=admin.id,
-        admin_name=admin_name,
+        admin_name=_admin_name(admin),
         file_id=file_id,
         file_type=file_type,
     )

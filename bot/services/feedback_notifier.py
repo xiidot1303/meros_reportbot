@@ -1,10 +1,14 @@
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 
 from bot.models import Feedback
 from bot.resources.strings import Strings
 from bot.services.feedback_service import (
+    TAKE_BUTTON_TEXT,
+    TAKE_CALLBACK_PREFIX,
     admin_answered_text,
     admin_feedback_text,
+    admin_in_progress_text,
     get_admin_chat_id,
 )
 
@@ -25,7 +29,7 @@ SENDABLE = ("photo", "video", "document", "audio", "voice",
 CAPTIONLESS = ("video_note", "sticker")
 
 
-async def _send_with_attachment(bot, chat_id, text, file_id, file_type):
+async def _send_with_attachment(bot, chat_id, text, file_id, file_type, reply_markup=None):
     """Send text plus an optional attachment, and return the message carrying the text.
 
     The text message is the one admins reply to, so for captionless media
@@ -34,16 +38,23 @@ async def _send_with_attachment(bot, chat_id, text, file_id, file_type):
     send = getattr(bot, f"send_{file_type}", None) if file_type in SENDABLE else None
 
     if not (file_id and send):
-        return await bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.HTML)
+        return await bot.send_message(
+            chat_id=chat_id, text=text, parse_mode=ParseMode.HTML,
+            reply_markup=reply_markup,
+        )
 
     if file_type in CAPTIONLESS:
         message = await bot.send_message(
-            chat_id=chat_id, text=text, parse_mode=ParseMode.HTML
+            chat_id=chat_id, text=text, parse_mode=ParseMode.HTML,
+            reply_markup=reply_markup,
         )
         await send(chat_id, file_id)
         return message
 
-    return await send(chat_id, file_id, caption=text, parse_mode=ParseMode.HTML)
+    return await send(
+        chat_id, file_id, caption=text, parse_mode=ParseMode.HTML,
+        reply_markup=reply_markup,
+    )
 
 
 async def notify_new_feedback(feedback: Feedback):
@@ -77,11 +88,33 @@ async def notify_new_feedback(feedback: Feedback):
         text=text,
         file_id=feedback.file_id,
         file_type=feedback.file_type,
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
+            text=TAKE_BUTTON_TEXT,
+            callback_data=f"{TAKE_CALLBACK_PREFIX}{feedback.pk}",
+        )]]),
     )
 
     feedback.admin_chat_id = chat_id
     feedback.admin_message_id = message.message_id
-    await feedback.asave(update_fields=["admin_chat_id", "admin_message_id"])
+    await feedback.asave(
+        update_fields=["admin_chat_id", "admin_message_id", "updated_at"])
+
+
+async def notify_client_in_review(feedback: Feedback, bot):
+    """Tell the client a staff member has taken their feedback."""
+    bot_user = feedback.bot_user
+    if not (bot_user and bot_user.user_id):
+        return False
+
+    words = Strings(user_id=bot_user.user_id)
+    await bot.send_message(
+        chat_id=bot_user.user_id,
+        text=words.feedback_in_review.format(
+            number_line=_client_number_line(feedback, words)
+        ),
+        parse_mode=ParseMode.HTML,
+    )
+    return True
 
 
 async def send_answer_to_client(feedback: Feedback, bot):
@@ -107,12 +140,11 @@ async def send_answer_to_client(feedback: Feedback, bot):
     return True
 
 
-async def mark_admin_message_answered(feedback: Feedback, bot):
-    """Edit the admin-group message so handled feedback is visible at a glance."""
+async def _edit_admin_message(feedback: Feedback, bot, text):
+    """Rewrite the feedback's group message, which also drops the take button."""
     if not (feedback.admin_chat_id and feedback.admin_message_id):
         return
 
-    text = admin_answered_text(feedback)
     try:
         await bot.edit_message_text(
             chat_id=feedback.admin_chat_id,
@@ -131,3 +163,13 @@ async def mark_admin_message_answered(feedback: Feedback, bot):
             )
         except Exception:
             pass
+
+
+async def mark_admin_message_in_progress(feedback: Feedback, bot):
+    """Show in the group who took the feedback, so nobody else picks it up."""
+    await _edit_admin_message(feedback, bot, admin_in_progress_text(feedback))
+
+
+async def mark_admin_message_answered(feedback: Feedback, bot):
+    """Edit the admin-group message so handled feedback is visible at a glance."""
+    await _edit_admin_message(feedback, bot, admin_answered_text(feedback))

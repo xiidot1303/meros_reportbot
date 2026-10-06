@@ -550,6 +550,17 @@ Tez orada javob beramiz."""
 Мы ответим вам в ближайшее время."""
     ]
 
+    # sent once a staff member takes the feedback with the group button
+    feedback_in_review = [
+"""⏳ <b>Murojaatingiz ko'rib chiqilmoqda!</b>
+{number_line}
+Murojaatingiz xodimlarimiz tomonidan ko'rib chiqilmoqda. Tez orada javob beramiz."""
+,
+"""⏳ <b>Ваше обращение на рассмотрении!</b>
+{number_line}
+Ваше обращение рассматривается нашими сотрудниками. Мы ответим вам в ближайшее время."""
+    ]
+
     feedback_answer = [
 """\U0001F4AC <b>Murojaatingizga javob berildi!</b>
 {number_line}

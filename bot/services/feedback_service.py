@@ -23,6 +23,12 @@ ATTACHMENT_NOTE = "\n\n\U0001F4CE К обращению приложен фай�
 
 ANSWER_MARKER = "@@@"
 
+# the button under a new feedback in the admin group; its callback carries the pk
+TAKE_BUTTON_TEXT = "\U0001F64B Взять в работу"
+TAKE_CALLBACK_PREFIX = "feedback_take_"
+
+IN_PROGRESS_NOTE = "\n\n\U0001F504 <b>На рассмотрении:</b> {admin} ({taken_at})"
+
 # Telegram allows at most 50 inline results per answer
 INLINE_RESULT_LIMIT = 50
 
@@ -167,11 +173,37 @@ async def save_answer(feedback, answer, admin_user_id=None, admin_name=None,
     feedback.answered_by = admin_user_id
     feedback.answered_by_name = admin_name
     feedback.answered_at = timezone.now()
+    feedback.status = Feedback.ANSWERED
     await feedback.asave(update_fields=[
         "answer", "answer_file_id", "answer_file_type",
         "answered_by", "answered_by_name", "answered_at",
+        "status", "updated_at",
     ])
     return feedback
+
+
+async def take_feedback(feedback_id, chat_id, admin_user_id, admin_name):
+    """A staff member pressed "take" on the group message.
+
+    Returns `(feedback, taken)`: `taken` is False when someone else got there
+    first or it is already answered — the update is conditional on the status
+    still being NEW, so two admins clicking at once can't both take it.
+    `feedback` is None when no feedback was posted under this id in this chat.
+    """
+    now = timezone.now()
+    taken = await Feedback.objects.filter(
+        pk=feedback_id, admin_chat_id=chat_id, status=Feedback.NEW,
+    ).aupdate(
+        status=Feedback.IN_PROGRESS,
+        taken_by=admin_user_id,
+        taken_by_name=admin_name,
+        taken_at=now,
+        updated_at=now,
+    )
+    feedback = await Feedback.objects.filter(
+        pk=feedback_id, admin_chat_id=chat_id,
+    ).select_related("bot_user", "client").afirst()
+    return feedback, bool(taken)
 
 
 def _number_line(feedback: Feedback):
@@ -192,6 +224,14 @@ def admin_feedback_text(feedback: Feedback):
         phone=html.escape(feedback.bot_user.phone or "—") if feedback.bot_user else "—",
         text=html.escape(feedback.text),
         attachment=ATTACHMENT_NOTE if feedback.file_id else "",
+    )
+
+
+def admin_in_progress_text(feedback: Feedback):
+    """The group message once a staff member has taken the feedback."""
+    return admin_feedback_text(feedback) + IN_PROGRESS_NOTE.format(
+        admin=html.escape(feedback.taken_by_name or "—"),
+        taken_at=feedback.taken_at.strftime("%d.%m.%Y %H:%M") if feedback.taken_at else "—",
     )
 
 

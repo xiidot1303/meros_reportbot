@@ -86,11 +86,40 @@ admin.site.register(Cabinet, CabinetAdmin)
 
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ('feedback_type', 'ttn_number', 'client', 'bot_user', 'is_answered', 'date', 'answered_at')
-    search_fields = ('ttn_number', 'text', 'answer', 'client__name')
-    list_filter = ('feedback_type', 'date', 'answered_at')
-    readonly_fields = ('date', 'answered_at', 'answered_by', 'answered_by_name',
+    list_display = ('id', 'status_badge', 'feedback_type', 'ttn_number', 'client', 'bot_user',
+                    'taken_by_name', 'answered_by_name', 'date', 'updated_at', 'taken_at', 'answered_at')
+    list_display_links = ('id', 'status_badge')
+    search_fields = ('ttn_number', 'text', 'answer', 'client__name',
+                     'taken_by_name', 'answered_by_name')
+    list_filter = ('status', 'feedback_type', 'date', 'taken_at', 'answered_at')
+    list_select_related = ('client', 'bot_user')
+    date_hierarchy = 'date'
+    fieldsets = (
+        ('Обращение', {'fields': (
+            'client', 'bot_user', 'feedback_type', 'ttn_number', 'text', 'file_id', 'file_type')}),
+        ('Статус', {'fields': (
+            'status', 'taken_by_name', 'taken_by', 'answered_by_name', 'answered_by')}),
+        ('Ответ', {'fields': ('answer', 'answer_file_id', 'answer_file_type')}),
+        ('Даты', {'fields': ('date', 'updated_at', 'taken_at', 'answered_at')}),
+        ('Telegram', {'fields': ('admin_chat_id', 'admin_message_id')}),
+    )
+    # status and who/when are driven by the group button and the @@@ reply;
+    # editing them here would leave the group message out of step
+    readonly_fields = ('status', 'taken_by', 'taken_by_name', 'taken_at',
+                       'date', 'updated_at', 'answered_at', 'answered_by', 'answered_by_name',
                        'answer_file_id', 'answer_file_type', 'admin_message_id', 'admin_chat_id')
+
+    STATUS_COLORS = {
+        Feedback.NEW: '#dc3545',
+        Feedback.IN_PROGRESS: '#fd7e14',
+        Feedback.ANSWERED: '#28a745',
+    }
+
+    @admin.display(description='Статус', ordering='status')
+    def status_badge(self, obj):
+        return format_html(
+            '<span style="color:#fff;background:{};padding:2px 8px;border-radius:10px;white-space:nowrap">{}</span>',
+            self.STATUS_COLORS.get(obj.status, '#6c757d'), obj.get_status_display())
 
 
 @admin.register(ClientStaff)
