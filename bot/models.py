@@ -84,11 +84,15 @@ class Feedback(models.Model):
     # what the feedback is about — decides which reference number is asked for
     WAREHOUSE = 'warehouse'
     ACCOUNTING = 'accounting'
+    ANONYMOUS = 'anonymous'
+    # no longer offered — kept so feedback sent before "anonymous" replaced it
+    # still displays (unlike anonymous, it carried the client's name)
     OTHER = 'other'
     TYPE_CHOICES = [
         (WAREHOUSE, 'Склад'),
         (ACCOUNTING, 'Бухгалтерия'),
-        (OTHER, 'Другое'),
+        (ANONYMOUS, 'Анонимное'),
+        (OTHER, 'Другое (устар.)'),
     ]
 
     # where the feedback is in its handling: posted → a staff member takes it
@@ -102,6 +106,8 @@ class Feedback(models.Model):
         (ANSWERED, 'Отвечено'),
     ]
 
+    # For an anonymous feedback `client` stays empty and `bot_user` is kept only
+    # so the answer can be delivered back — neither is shown to staff.
     bot_user = models.ForeignKey('Bot_user', null=True, blank=True, on_delete=models.CASCADE, verbose_name='Пользователь бота')
     client = models.ForeignKey('app.Client', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Клиент')
     status = models.CharField(
@@ -114,7 +120,7 @@ class Feedback(models.Model):
         max_length=16, choices=TYPE_CHOICES, default=WAREHOUSE,
         db_index=True, verbose_name='Тип обращения')
     # ТТН for a warehouse issue, счёт-фактура (Order.deal_id) for an accounting
-    # one, empty for "other" — the reference number the whole thread is keyed on
+    # one, empty for anonymous — the reference number the whole thread is keyed on
     ttn_number = models.CharField(max_length=64, blank=True, default='', db_index=True, verbose_name='Номер ТТН / счёта-фактуры')
     text = models.TextField(verbose_name='Текст обращения')
     file_id = models.CharField(max_length=256, null=True, blank=True, verbose_name='File ID вложения обращения')
@@ -149,9 +155,40 @@ class Feedback(models.Model):
         return bool(self.answer or self.answer_file_id)
 
     @property
+    def is_anonymous(self):
+        return self.feedback_type == self.ANONYMOUS
+
+    @property
     def number_label(self):
         """Russian label for the reference number, by feedback type."""
         return 'Счёт-фактура' if self.feedback_type == self.ACCOUNTING else 'ТТН'
+
+
+class FeedbackGroup(models.Model):
+    """The Telegram group that receives one type of feedback.
+
+    Set in the admin for accounting and anonymous feedback; warehouse feedback
+    goes to its region's group (`app.Region.telegram_group_id`) instead. A type
+    with no row here falls back to ADMIN_GROUP_ID.
+    """
+
+    TYPE_CHOICES = [
+        (Feedback.ACCOUNTING, 'Бухгалтерия'),
+        (Feedback.ANONYMOUS, 'Анонимное'),
+    ]
+
+    feedback_type = models.CharField(
+        max_length=16, choices=TYPE_CHOICES, unique=True, verbose_name='Тип обращения')
+    telegram_group_id = models.BigIntegerField(verbose_name='ID Telegram-группы')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
+
+    class Meta:
+        verbose_name = "Группа для обращений"
+        verbose_name_plural = "Группы для обращений"
+        ordering = ['feedback_type']
+
+    def __str__(self) -> str:
+        return f"{self.get_feedback_type_display()}: {self.telegram_group_id}"
 
 
 class ClientStaff(models.Model):

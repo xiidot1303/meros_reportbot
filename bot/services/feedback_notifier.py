@@ -14,7 +14,7 @@ from bot.services.feedback_service import (
 
 
 def _client_number_line(feedback: Feedback, words: Strings):
-    """The "<label>: <number>" line for the client, or nothing for "other"."""
+    """The "<label>: <number>" line for the client, or nothing for anonymous."""
     if not feedback.ttn_number:
         return ""
     label = (words.feedback_number_label_factura

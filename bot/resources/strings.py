@@ -573,7 +573,7 @@ Murojaatingiz xodimlarimiz tomonidan ko'rib chiqilmoqda. Tez orada javob beramiz
 {answer}"""
     ]
 
-    # the "<label>: <number>" line above; blank for an "other" feedback, which
+    # the "<label>: <number>" line above; blank for an anonymous feedback, which
     # carries no reference number at all
     feedback_number_line = [
         "<b>{label}:</b> <code>{number}</code>\n",
@@ -600,9 +600,9 @@ Murojaatingiz qaysi bo'limga tegishli?""",
         "\U0001F4B0 Бухгалтерия (по счёту-фактуре)"
     ]
 
-    feedback_type_other = [
-        "\U0001F4AC Boshqa",
-        "\U0001F4AC Другое"
+    feedback_type_anonymous = [
+        "\U0001F576 Anonim murojaat",
+        "\U0001F576 Анонимное обращение"
     ]
 
     # labels for the reference number, per type
@@ -669,9 +669,13 @@ Endi murojaatingiz matnini yozing.""",
 Теперь напишите текст вашего обращения."""
     ]
 
-    feedback_ask_text_other = [
-        "\u270D\uFE0F Murojaatingiz matnini yozing.",
-        "\u270D\uFE0F Напишите текст вашего обращения."
+    feedback_ask_text_anonymous = [
+"""\U0001F576 <b>Murojaatingiz anonim bo'ladi</b> — xodimlarimiz ismingiz va telefon raqamingizni ko'rmaydi.
+
+\u270D\uFE0F Murojaatingiz matnini yozing.""",
+"""\U0001F576 <b>Ваше обращение будет анонимным</b> — сотрудники не увидят ваше имя и номер телефона.
+
+\u270D\uFE0F Напишите текст вашего обращения."""
     ]
 
     feedback_ask_file = [

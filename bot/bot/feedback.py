@@ -49,6 +49,9 @@ def _extract_attachment(message):
 ###############################################################################
 
 
+# the types a client can pick in the menu
+CLIENT_FEEDBACK_TYPES = (Feedback.WAREHOUSE, Feedback.ACCOUNTING, Feedback.ANONYMOUS)
+
 # the conversation collects these one step at a time, then _submit() drains them
 FEEDBACK_KEYS = ("feedback_type", "feedback_number", "feedback_text")
 
@@ -63,7 +66,7 @@ async def _ask_type(update: Update, context: CustomContext):
     """Entry point: which department is the feedback about?
 
     The answer decides the reference number that follows — a ТТН for the
-    warehouse, a счёт-фактура for accounting, none at all for anything else.
+    warehouse, a счёт-фактура for accounting, none at all for anonymous.
     """
     if update.callback_query:
         await update.callback_query.edit_message_reply_markup(None)
@@ -84,8 +87,8 @@ async def _ask_type(update: Update, context: CustomContext):
                 callback_data=f"feedback_type_{Feedback.ACCOUNTING}",
             )],
             [InlineKeyboardButton(
-                text=context.words.feedback_type_other,
-                callback_data=f"feedback_type_{Feedback.OTHER}",
+                text=context.words.feedback_type_anonymous,
+                callback_data=f"feedback_type_{Feedback.ANONYMOUS}",
             )],
             [InlineKeyboardButton(
                 text=context.words.main_menu,
@@ -98,16 +101,20 @@ async def _ask_type(update: Update, context: CustomContext):
 
 async def select_type(update: Update, context: CustomContext):
     """The client picked a feedback type."""
-    await update.callback_query.edit_message_reply_markup(None)
-
     feedback_type = update.callback_query.data[len("feedback_type_"):]
+    if feedback_type not in CLIENT_FEEDBACK_TYPES:
+        # a button from an older menu, e.g. the retired "other" type;
+        # _ask_type clears that menu's buttons itself
+        return await _ask_type(update, context)
+
+    await update.callback_query.edit_message_reply_markup(None)
     context.user_data["feedback_type"] = feedback_type
 
-    if feedback_type == Feedback.OTHER:
-        # nothing to reference — go straight to the text
+    if feedback_type == Feedback.ANONYMOUS:
+        # nothing to reference — say it is anonymous and go straight to the text
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=context.words.feedback_ask_text_other,
+            text=context.words.feedback_ask_text_anonymous,
             parse_mode=ParseMode.HTML,
         )
         return GET_FEEDBACK_TEXT

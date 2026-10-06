@@ -86,7 +86,7 @@ admin.site.register(Cabinet, CabinetAdmin)
 
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ('id', 'status_badge', 'feedback_type', 'ttn_number', 'client', 'bot_user',
+    list_display = ('id', 'status_badge', 'feedback_type', 'ttn_number', 'client_display', 'bot_user_display',
                     'taken_by_name', 'answered_by_name', 'date', 'updated_at', 'taken_at', 'answered_at')
     list_display_links = ('id', 'status_badge')
     search_fields = ('ttn_number', 'text', 'answer', 'client__name',
@@ -120,6 +120,47 @@ class FeedbackAdmin(admin.ModelAdmin):
         return format_html(
             '<span style="color:#fff;background:{};padding:2px 8px;border-radius:10px;white-space:nowrap">{}</span>',
             self.STATUS_COLORS.get(obj.status, '#6c757d'), obj.get_status_display())
+
+    # An anonymous feedback keeps its bot user only so the answer can reach
+    # them; everywhere here it is shown as "Аноним" instead.
+    ANONYMOUS = '\U0001F576 Аноним'
+
+    @admin.display(description='Клиент', ordering='client__name')
+    def client_display(self, obj):
+        return self.ANONYMOUS if obj.is_anonymous else (obj.client or '—')
+
+    @admin.display(description='Пользователь бота')
+    def bot_user_display(self, obj):
+        return self.ANONYMOUS if obj.is_anonymous else (obj.bot_user or '—')
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if not (obj and obj.is_anonymous):
+            return fieldsets
+        (title, options), *rest = fieldsets
+        fields = tuple('client_display' if f == 'client' else f
+                       for f in options['fields'] if f != 'bot_user')
+        return ((title, {**options, 'fields': fields}), *rest)
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly = (*self.readonly_fields, 'client_display')
+        # switching an anonymous feedback to another type would reveal its
+        # sender, and re-typing any sent feedback has no meaning anyway
+        return (*readonly, 'feedback_type') if obj else readonly
+
+    def lookup_allowed(self, lookup, *args, **kwargs):
+        # ?bot_user__id__exact=… in the URL would list one user's feedback,
+        # anonymous ones included
+        if lookup.startswith('bot_user'):
+            return False
+        return super().lookup_allowed(lookup, *args, **kwargs)
+
+
+@admin.register(FeedbackGroup)
+class FeedbackGroupAdmin(admin.ModelAdmin):
+    list_display = ('feedback_type', 'telegram_group_id', 'updated_at')
+    list_editable = ('telegram_group_id',)
+    readonly_fields = ('updated_at',)
 
 
 @admin.register(ClientStaff)

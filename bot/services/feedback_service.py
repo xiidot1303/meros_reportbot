@@ -4,19 +4,22 @@ from asgiref.sync import sync_to_async
 from django.utils import timezone
 
 from app.models import Order, Warehouse
-from bot.models import Bot_user, Cabinet, Feedback
+from bot.models import Bot_user, Cabinet, Feedback, FeedbackGroup
 from config import ADMIN_GROUP_ID
 
 
 ADMIN_FEEDBACK_TEXT = """\U0001F4DD <b>Новое обращение от клиента</b>
 <b>Тип:</b> {feedback_type}
-{number_line}<b>Клиент:</b> {client}
-<b>Телефон:</b> {phone}
-
+{number_line}{client_lines}
 <b>Обращение:</b>
 {text}{attachment}"""
 
-# omitted entirely for an "other" feedback, which carries no reference number
+CLIENT_LINES = "<b>Клиент:</b> {client}\n<b>Телефон:</b> {phone}\n"
+
+# stands in for the client name everywhere staff look at an anonymous feedback
+ANONYMOUS_CLIENT = "\U0001F576 Аноним"
+
+# omitted entirely for an anonymous feedback, which carries no reference number
 NUMBER_LINE = "<b>{label}:</b> <code>{number}</code>\n"
 
 ATTACHMENT_NOTE = "\n\n\U0001F4CE К обращению приложен файл."
@@ -49,19 +52,25 @@ async def create_feedback(user_id, text, feedback_type=Feedback.WAREHOUSE,
 
     `ttn_number` holds the ТТН for a warehouse feedback and the счёт-фактура
     number (the order's `deal_id`) for an accounting one; it is empty for
-    "other", which references nothing.
+    anonymous, which references nothing.
+
+    An anonymous feedback is not linked to the client at all — only to the bot
+    user, so the answer can still reach them.
     """
     bot_user = await Bot_user.objects.filter(user_id=user_id).afirst()
     if not bot_user:
         return None
 
-    cabinet = await Cabinet.objects.filter(
-        bot_user=bot_user, is_active=True
-    ).select_related("client").afirst()
+    client = None
+    if feedback_type != Feedback.ANONYMOUS:
+        cabinet = await Cabinet.objects.filter(
+            bot_user=bot_user, is_active=True
+        ).select_related("client").afirst()
+        client = cabinet.client if cabinet else None
 
     return await Feedback.objects.acreate(
         bot_user=bot_user,
-        client=cabinet.client if cabinet else None,
+        client=client,
         feedback_type=feedback_type,
         ttn_number=ttn_number or "",
         text=text,
@@ -168,8 +177,9 @@ async def get_admin_chat_id(feedback: Feedback):
     """The group a new feedback is posted to.
 
     Warehouse feedback goes to the group of the oblast whose warehouse shipped
-    the order (by its ТТН); everything else — and any warehouse feedback whose
-    order, warehouse or region group can't be resolved — goes to ADMIN_GROUP_ID.
+    the order (by its ТТН); accounting and anonymous go to the group set for
+    their type in `FeedbackGroup`. Whatever can't be resolved — no order,
+    warehouse, region group or type group — goes to ADMIN_GROUP_ID.
     """
     if (feedback.feedback_type == Feedback.WAREHOUSE
             and feedback.ttn_number and feedback.client_id):
@@ -182,6 +192,11 @@ async def get_admin_chat_id(feedback: Feedback):
                 order.warehouse_id)
             if group_id:
                 return group_id
+    elif feedback.feedback_type in (Feedback.ACCOUNTING, Feedback.ANONYMOUS):
+        group = await FeedbackGroup.objects.filter(
+            feedback_type=feedback.feedback_type).afirst()
+        if group:
+            return group.telegram_group_id
     return ADMIN_GROUP_ID or None
 
 
@@ -237,12 +252,27 @@ def _number_line(feedback: Feedback):
     )
 
 
+def _client_name(feedback: Feedback):
+    if feedback.is_anonymous:
+        return ANONYMOUS_CLIENT
+    return html.escape(feedback.client.name if feedback.client else "—")
+
+
+def _client_lines(feedback: Feedback):
+    """Client and phone — or, for an anonymous feedback, only that it is one."""
+    if feedback.is_anonymous:
+        return f"<b>Клиент:</b> {ANONYMOUS_CLIENT}\n"
+    return CLIENT_LINES.format(
+        client=_client_name(feedback),
+        phone=html.escape(feedback.bot_user.phone or "—") if feedback.bot_user else "—",
+    )
+
+
 def admin_feedback_text(feedback: Feedback):
     return ADMIN_FEEDBACK_TEXT.format(
         feedback_type=feedback.get_feedback_type_display(),
         number_line=_number_line(feedback),
-        client=html.escape(feedback.client.name if feedback.client else "—"),
-        phone=html.escape(feedback.bot_user.phone or "—") if feedback.bot_user else "—",
+        client_lines=_client_lines(feedback),
         text=html.escape(feedback.text),
         attachment=ATTACHMENT_NOTE if feedback.file_id else "",
     )
@@ -263,7 +293,7 @@ def admin_answered_text(feedback: Feedback, admin_name=None):
     return ADMIN_ANSWERED_TEXT.format(
         feedback_type=feedback.get_feedback_type_display(),
         number_line=_number_line(feedback),
-        client=html.escape(feedback.client.name if feedback.client else "—"),
+        client=_client_name(feedback),
         text=html.escape(feedback.text),
         attachment=ATTACHMENT_NOTE if feedback.file_id else "",
         admin=html.escape(admin_name or feedback.answered_by_name or "—"),
