@@ -10,10 +10,11 @@ from bot.services.feedback_service import (
     TAKE_CALLBACK_PREFIX,
     create_feedback,
     find_client_order,
+    get_client_order,
     get_feedback_by_admin_message,
     has_marker,
+    list_client_orders,
     save_answer,
-    search_client_orders,
     strip_marker,
     take_feedback,
 )
@@ -114,47 +115,147 @@ async def select_type(update: Update, context: CustomContext):
     return await _ask_number(update, context, feedback_type)
 
 
-# The inline query arrives as its own update, outside the conversation, so the
-# feedback type travels in the query text itself rather than through shared
-# state: the search button pre-fills this prefix and the handler reads it back.
-ACCOUNTING_QUERY_PREFIX = "f:"
+# callback data of the order picker
+PICK_PREFIX = "feedback_pick_"
+PAGE_PREFIX = "feedback_page_"
+PAGE_NOOP = "feedback_page_noop"
+
+# one picker button: the number being asked for, then amount and date so the
+# client can tell orders apart
+ORDER_BUTTON = "{icon} {number} | {amount} | {date}"
+
+
+def _is_accounting(feedback_type):
+    return feedback_type == Feedback.ACCOUNTING
+
+
+async def _orders_keyboard(update: Update, context: CustomContext, feedback_type, page=0):
+    """The picker for one page — or None when there is nothing to pick.
+
+    Warehouse lists orders by ТТН; accounting by the order's `deal_id`, which
+    is the счёт-фактура number.
+    """
+    accounting = _is_accounting(feedback_type)
+    orders, page, page_count = await list_client_orders(
+        update.effective_user.id, page, by_deal_id=accounting)
+    if not orders:
+        return None
+
+    rows = [
+        [InlineKeyboardButton(
+            text=ORDER_BUTTON.format(
+                icon="\U0001F4C4" if accounting else "\U0001F4E6",
+                number=order.deal_id if accounting else order.delivery_number,
+                amount=_amount(order.total_amount),
+                date=_date(order.delivery_date),
+            ),
+            callback_data=f"{PICK_PREFIX}{order.pk}",
+        )]
+        for order in orders
+    ]
+
+    if page_count > 1:
+        nav = []
+        if page > 0:
+            nav.append(InlineKeyboardButton(
+                text="\u2B05\uFE0F", callback_data=f"{PAGE_PREFIX}{page - 1}"))
+        nav.append(InlineKeyboardButton(
+            text=f"{page + 1}/{page_count}", callback_data=PAGE_NOOP))
+        if page < page_count - 1:
+            nav.append(InlineKeyboardButton(
+                text="\u27A1\uFE0F", callback_data=f"{PAGE_PREFIX}{page + 1}"))
+        rows.append(nav)
+
+    rows.append([
+        # re-enters the conversation at the type choice
+        InlineKeyboardButton(text=context.words.back, callback_data="feedback"),
+        InlineKeyboardButton(text=context.words.main_menu, callback_data="main_menu"),
+    ])
+    return InlineKeyboardMarkup(rows)
 
 
 async def _ask_number(update: Update, context: CustomContext, feedback_type):
-    """Ask for the ТТН / счёт-фактура, offering the inline order search.
+    """Ask for the ТТН / счёт-фактура as a paged list of the client's orders.
 
-    Warehouse searches orders by ТТН; accounting searches — and sends back —
-    the order's `deal_id`, which is the factura number.
+    Typing the number by hand still works — `get_ttn` takes it.
     """
-    accounting = feedback_type == Feedback.ACCOUNTING
+    accounting = _is_accounting(feedback_type)
+    keyboard = await _orders_keyboard(update, context, feedback_type)
+    if not keyboard:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=(context.words.feedback_no_facturas if accounting
+                  else context.words.feedback_no_orders),
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(text=context.words.back, callback_data="feedback"),
+                InlineKeyboardButton(text=context.words.main_menu, callback_data="main_menu"),
+            ]]),
+        )
+        return GET_FEEDBACK_TTN
+
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=(context.words.feedback_ask_factura if accounting
               else context.words.feedback_ask_ttn),
         parse_mode=ParseMode.HTML,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(
-                text=(context.words.feedback_search_factura if accounting
-                      else context.words.feedback_search_ttn),
-                switch_inline_query_current_chat=(
-                    ACCOUNTING_QUERY_PREFIX if accounting else ""),
-            )],
-            [InlineKeyboardButton(
-                text=context.words.main_menu,
-                callback_data="main_menu",
-            )],
-        ]),
+        reply_markup=keyboard,
     )
     return GET_FEEDBACK_TTN
 
 
-async def get_ttn(update: Update, context: CustomContext):
-    """The client picked an order from the inline search, or typed a number by hand."""
+async def change_page(update: Update, context: CustomContext):
+    """⬅️ / ➡️ in the order picker — redraw the same message on another page."""
+    query = update.callback_query
+    if query.data == PAGE_NOOP:
+        # the "2/5" counter between the arrows
+        await query.answer()
+        return GET_FEEDBACK_TTN
+
     feedback_type = context.user_data.get("feedback_type")
     if not feedback_type:
         return await _ask_type(update, context)
 
-    accounting = feedback_type == Feedback.ACCOUNTING
+    await query.answer()
+    keyboard = await _orders_keyboard(
+        update, context, feedback_type, page=int(query.data[len(PAGE_PREFIX):]))
+    if keyboard:
+        await query.edit_message_reply_markup(keyboard)
+    return GET_FEEDBACK_TTN
+
+
+async def pick_order(update: Update, context: CustomContext):
+    """The client tapped an order in the picker."""
+    query = update.callback_query
+    feedback_type = context.user_data.get("feedback_type")
+    if not feedback_type:
+        return await _ask_type(update, context)
+
+    accounting = _is_accounting(feedback_type)
+    order = await get_client_order(
+        update.effective_user.id, int(query.data[len(PICK_PREFIX):]),
+        by_deal_id=accounting)
+    if not order:
+        # e.g. the active cabinet was switched since the list was drawn
+        await query.answer(
+            context.words.feedback_factura_not_found if accounting
+            else context.words.feedback_ttn_not_found,
+            show_alert=True,
+        )
+        return GET_FEEDBACK_TTN
+
+    await query.answer()
+    await query.edit_message_reply_markup(None)
+    return await _accept_order(update, context, feedback_type, order)
+
+
+async def get_ttn(update: Update, context: CustomContext):
+    """The client typed the ТТН / счёт-фактура number by hand."""
+    feedback_type = context.user_data.get("feedback_type")
+    if not feedback_type:
+        return await _ask_type(update, context)
+
+    accounting = _is_accounting(feedback_type)
     number = (update.effective_message.text or "").strip()
     order = await find_client_order(
         update.effective_user.id, number, by_deal_id=accounting)
@@ -167,7 +268,12 @@ async def get_ttn(update: Update, context: CustomContext):
         )
         return GET_FEEDBACK_TTN
 
-    number = order.deal_id if accounting else order.delivery_number
+    return await _accept_order(update, context, feedback_type, order)
+
+
+async def _accept_order(update: Update, context: CustomContext, feedback_type, order):
+    """Remember the order's number and move on to the feedback text."""
+    number = order.deal_id if _is_accounting(feedback_type) else order.delivery_number
     context.user_data["feedback_number"] = number
 
     await context.bot.send_message(
@@ -259,72 +365,6 @@ async def _submit(update: Update, context: CustomContext, file_id=None, file_typ
     await notify_new_feedback(feedback)
     await main_menu(update, context)
     return ConversationHandler.END
-
-
-async def ttn_inline_query(update: Update, context: CustomContext):
-    """Inline search over the client's archived ("A") orders.
-
-    Keyed on the ТТН for a warehouse feedback and on the счёт-фактура number
-    (the order's `deal_id`) for an accounting one — the same number the client
-    is being asked for, so what they type matches what they see and send.
-    """
-    query = update.inline_query.query or ""
-    accounting = query.startswith(ACCOUNTING_QUERY_PREFIX)
-    if accounting:
-        query = query[len(ACCOUNTING_QUERY_PREFIX):].strip()
-
-    orders = await search_client_orders(
-        update.effective_user.id, query, by_deal_id=accounting)
-
-    if not orders:
-        empty = (context.words.feedback_inline_no_facturas if accounting
-                 else context.words.feedback_inline_no_orders)
-        await update.inline_query.answer(
-            [InlineQueryResultArticle(
-                id=str(uuid4()),
-                title=empty,
-                description=(
-                    context.words.feedback_inline_no_facturas_description
-                    if accounting else
-                    context.words.feedback_inline_no_orders_description
-                ),
-                input_message_content=InputTextMessageContent(empty),
-            )],
-            cache_time=0,
-            is_personal=True,
-        )
-        return
-
-    results = [
-        InlineQueryResultArticle(
-            id=str(uuid4()),
-            title=(
-                context.words.feedback_inline_factura.format(
-                    deal_id=order.deal_id)
-                if accounting else
-                context.words.feedback_inline_order.format(
-                    ttn_number=order.delivery_number)
-            ),
-            description=(
-                context.words.feedback_inline_factura_description.format(
-                    # the ТТН only exists once the warehouse has shipped, so
-                    # for most facturas there is nothing to show here yet
-                    ttn_number=order.delivery_number or "—",
-                    total_amount=_amount(order.total_amount),
-                )
-                if accounting else
-                context.words.feedback_inline_order_description.format(
-                    total_amount=_amount(order.total_amount),
-                    delivery_date=_date(order.delivery_date),
-                )
-            ),
-            # the chosen result posts the reference number back into the chat
-            input_message_content=InputTextMessageContent(
-                order.deal_id if accounting else order.delivery_number),
-        )
-        for order in orders
-    ]
-    await update.inline_query.answer(results, cache_time=0, is_personal=True)
 
 
 def _amount(value):

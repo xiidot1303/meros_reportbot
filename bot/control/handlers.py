@@ -4,7 +4,6 @@ from telegram.ext import (
     MessageHandler,
     filters,
     CallbackQueryHandler,
-    InlineQueryHandler,
     TypeHandler,
     ConversationHandler
 )
@@ -279,6 +278,14 @@ feedback_handler = ConversationHandler(
             )
         ],
         GET_FEEDBACK_TTN: [
+            CallbackQueryHandler(
+                feedback.pick_order,
+                pattern="^feedback_pick_\\d+$"
+            ),
+            CallbackQueryHandler(
+                feedback.change_page,
+                pattern="^feedback_page_(\\d+|noop)$"
+            ),
             MessageHandler(
                 exceptions_for_filter_text & filters.TEXT,
                 feedback.get_ttn
@@ -345,10 +352,6 @@ admin_phones_handler = ConversationHandler(
 )
 
 
-# the ТТН search behind the feedback form's "find ТТН" button
-feedback_inline_query_handler = InlineQueryHandler(feedback.ttn_inline_query)
-
-
 # staff take a feedback with the button under its group message
 admin_feedback_take_handler = CallbackQueryHandler(
     feedback.admin_take, pattern="^feedback_take_\\d+$"
@@ -373,8 +376,6 @@ handlers = [
     staff_handler,
     feedback_handler,
     admin_phones_handler,
-
-    feedback_inline_query_handler,
 
     TypeHandler(type=NewsletterUpdate, callback=main.newsletter_update),
 

@@ -29,8 +29,8 @@ TAKE_CALLBACK_PREFIX = "feedback_take_"
 
 IN_PROGRESS_NOTE = "\n\n\U0001F504 <b>На рассмотрении:</b> {admin} ({taken_at})"
 
-# Telegram allows at most 50 inline results per answer
-INLINE_RESULT_LIMIT = 50
+# orders per page in the ТТН / счёт-фактура picker
+ORDERS_PAGE_SIZE = 10
 
 ADMIN_ANSWERED_TEXT = """✅ <b>Обращение обработано</b>
 <b>Тип:</b> {feedback_type}
@@ -70,37 +70,60 @@ async def create_feedback(user_id, text, feedback_type=Feedback.WAREHOUSE,
     )
 
 
-async def search_client_orders(user_id, query="", limit=INLINE_RESULT_LIMIT,
-                               by_deal_id=False):
-    """Archived ("A") orders of the user's active cabinet, matched by number prefix.
-
-    Feeds the inline-query search; returns [] when the user has no cabinet.
-    `by_deal_id` matches on the счёт-фактура number (`deal_id`) instead of the
-    ТТН, so the accounting flow searches by the same number it will send on.
-    Prefix (not substring) matching, so a query must start the number — this is
-    what lets the lookup use an index instead of scanning.
-
-    Orders lacking the number being searched are skipped, since there would be
-    nothing for the client to pick: an order gets its `deal_id` up front but
-    its ТТН only once the warehouse ships it, so the two exclusions are not
-    interchangeable — filtering the factura search on the ТТН would hide almost
-    every order.
-    """
+async def _active_client(user_id):
     cabinet = await Cabinet.objects.filter(
         bot_user__user_id=user_id, is_active=True
     ).select_related("client").afirst()
-    if not (cabinet and cabinet.client):
-        return []
+    return cabinet.client if cabinet else None
 
+
+def _pickable_orders(client, by_deal_id):
+    """Archived ("A") orders of `client` that carry the number being asked for.
+
+    `by_deal_id` keys on the счёт-фактура number (`deal_id`) instead of the
+    ТТН. Orders lacking that number are skipped, since there would be nothing
+    for the client to pick: an order gets its `deal_id` up front but its ТТН
+    only once the warehouse ships it, so the two exclusions are not
+    interchangeable — filtering the factura list on the ТТН would hide almost
+    every order.
+    """
     field = "deal_id" if by_deal_id else "delivery_number"
-    orders = Order.objects.filter(
-        client=cabinet.client, status="A"
+    return Order.objects.filter(
+        client=client, status="A"
     ).exclude(**{f"{field}__isnull": True}).exclude(**{field: ""})
-    query = (query or "").strip()
-    if query:
-        orders = orders.filter(**{f"{field}__istartswith": query})
-    # sorted by the same date the picker shows, so newest-first reads correctly
-    return [o async for o in orders.order_by("-delivery_date", "-id")[:limit]]
+
+
+async def list_client_orders(user_id, page=0, by_deal_id=False,
+                             page_size=ORDERS_PAGE_SIZE):
+    """One page of the picker: `(orders, page, page_count)`, newest first.
+
+    `page` is clamped into range, so a stale "next" button on a list that has
+    since shrunk lands on the last page instead of an empty one. Returns
+    `([], 0, 0)` when the user has no cabinet or nothing to pick.
+    """
+    client = await _active_client(user_id)
+    if not client:
+        return [], 0, 0
+
+    orders = _pickable_orders(client, by_deal_id)
+    total = await orders.acount()
+    if not total:
+        return [], 0, 0
+
+    page_count = -(-total // page_size)
+    page = max(0, min(page, page_count - 1))
+    offset = page * page_size
+    page_orders = [o async for o in orders.order_by(
+        "-delivery_date", "-id")[offset:offset + page_size]]
+    return page_orders, page, page_count
+
+
+async def get_client_order(user_id, order_id, by_deal_id=False):
+    """The picked order, if it still belongs to the user's active cabinet."""
+    client = await _active_client(user_id)
+    if not client:
+        return None
+    return await _pickable_orders(client, by_deal_id).filter(pk=order_id).afirst()
 
 
 async def find_client_order(user_id, number, by_deal_id=False):
@@ -113,15 +136,13 @@ async def find_client_order(user_id, number, by_deal_id=False):
     if not number:
         return None
 
-    cabinet = await Cabinet.objects.filter(
-        bot_user__user_id=user_id, is_active=True
-    ).select_related("client").afirst()
-    if not (cabinet and cabinet.client):
+    client = await _active_client(user_id)
+    if not client:
         return None
 
     field = "deal_id" if by_deal_id else "delivery_number"
     return await Order.objects.filter(
-        client=cabinet.client, status="A", **{field: number}
+        client=client, status="A", **{field: number}
     ).afirst()
 
 
