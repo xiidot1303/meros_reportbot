@@ -9,7 +9,7 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('deal_id', 'delivery_number', 'client', 'client__phone', 'status', 'total_amount', 'delivery_date')
+    list_display = ('deal_id', 'delivery_number', 'client', 'client__phone', 'status', 'total_amount', 'delivery_date', 'warehouse_id')
     search_fields = ('deal_id', 'client__name', 'manager', 'delivery_number')
     list_filter = ('status', 'delivery_date')
     autocomplete_fields = ('client',)
@@ -42,3 +42,39 @@ class PriceListFileAdmin(admin.ModelAdmin):
     list_display = ('warehouse_id', 'price_type_id', 'row_count', 'generated_at', 'path', 'telegram_file_id')
     list_filter = ('warehouse_id', 'price_type_id')
     readonly_fields = ('warehouse_id', 'price_type_id', 'path', 'generated_at', 'row_count', 'telegram_file_id')
+
+
+class RegionLevelFilter(admin.SimpleListFilter):
+    """Oblasts (parent = Uzbekistan) vs. their districts."""
+    title = "Уровень"
+    parameter_name = "level"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("oblast", f"Области (родитель = {Region.UZBEKISTAN_ID})"),
+            ("district", "Районы"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == "oblast":
+            return queryset.filter(parent_id=Region.UZBEKISTAN_ID)
+        if self.value() == "district":
+            return queryset.exclude(parent_id=Region.UZBEKISTAN_ID)
+        return queryset
+
+
+@admin.register(Region)
+class RegionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'region_id', 'parent_name', 'parent_id', 'telegram_group_id', 'updated_at')
+    list_editable = ('telegram_group_id',)
+    search_fields = ('name', 'region_id', 'parent_name')
+    list_filter = (RegionLevelFilter,)
+    # everything but the group id is owned by the Oracle sync
+    readonly_fields = ('region_id', 'name', 'parent_id', 'parent_name', 'updated_at')
+
+
+@admin.register(Warehouse)
+class WarehouseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'warehouse_id', 'region_name', 'region_id', 'updated_at')
+    search_fields = ('name', 'warehouse_id', 'region_name')
+    readonly_fields = ('warehouse_id', 'name', 'region_id', 'region_name', 'updated_at')

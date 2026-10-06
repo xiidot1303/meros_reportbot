@@ -1,6 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import register_events, DjangoJobStore
-from app.scheduled_job import smartup_job, soliq_job, price_job, debt_job
+from app.scheduled_job import smartup_job, soliq_job, price_job, debt_job, region_job
 from bot.scheduled_job import mailing
 from bot.services.redis_service import save_langs_to_redis
 from asgiref.sync import async_to_sync
@@ -36,6 +36,11 @@ class jobs:
     scheduler.add_job(
         debt_job.notify_overdue_payments,
         'cron', hour=14, minute=0, name='notify_overdue_payments')
+
+    # regions and warehouses barely change — once a day, before the workday
+    scheduler.add_job(
+        region_job.sync_regions,
+        'cron', hour=6, minute=0, name='sync_regions')
 
     # bot
     scheduler.add_job(save_langs_to_redis, 'interval', minutes=20)

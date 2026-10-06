@@ -78,6 +78,14 @@ def resolve_dropped_order_status(deal_id):
 
 
 @notify_on_exception
+def parse_warehouse_id(value):
+    """SmartUp sends `warehouse_ids` as a string holding a single id."""
+    try:
+        return int(str(value).strip()) if value not in (None, "") else None
+    except ValueError:
+        return None
+
+
 def handle_orders_change(orders_list: list):
     incoming_ids = [item[0] for item in orders_list]
     existing_orders = Order.objects.filter(deal_id__in=incoming_ids)
@@ -103,6 +111,7 @@ def handle_orders_change(orders_list: list):
         total_amount = order[10]
         delivery_number = order[12] if len(order) > 12 else None
         sales_manager_name = order[13] if len(order) > 13 else None
+        warehouse_id = parse_warehouse_id(order[14] if len(order) > 14 else None)
 
         # update if exist
         if deal_id in existing_map:
@@ -115,6 +124,10 @@ def handle_orders_change(orders_list: list):
             # the sales manager can be assigned or reassigned after the order is placed
             if sales_manager_name and order_obj.sales_manager_name != sales_manager_name:
                 order_obj.sales_manager_name = sales_manager_name
+                have_to_update = True
+            # backfills orders synced before the column was fetched
+            if warehouse_id and order_obj.warehouse_id != warehouse_id:
+                order_obj.warehouse_id = warehouse_id
                 have_to_update = True
             # check for status change
             if order_obj.status != status:
@@ -180,6 +193,7 @@ def handle_orders_change(orders_list: list):
                     manager=manager,
                     sales_manager_name=sales_manager_name,
                     total_amount=total_amount,
+                    warehouse_id=warehouse_id,
                 )
             )
 
@@ -215,7 +229,7 @@ def handle_orders_change(orders_list: list):
                 Order.objects.bulk_update(
                     to_update[i:i+500],
                     ["status", "total_amount", "delivery_number", "delivery_date",
-                     "sales_manager_name"])
+                     "sales_manager_name", "warehouse_id"])
 
         ## bulk_create(ignore_conflicts=True) leaves pks unset, so notify by deal_id
         ## dont send new created orders notify by now

@@ -109,6 +109,9 @@ class Feedback(models.Model):
     answered_by_name = models.CharField(max_length=256, null=True, blank=True, verbose_name='Администратор')
     answered_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата ответа')
     admin_message_id = models.BigIntegerField(null=True, blank=True, verbose_name='ID сообщения в группе админов')
+    # warehouse feedback goes to its region's group, the rest to ADMIN_GROUP_ID;
+    # message ids are per chat, so the pair is what identifies the message
+    admin_chat_id = models.BigIntegerField(null=True, blank=True, verbose_name='ID группы админов')
     date = models.DateTimeField(db_index=True, null=True, auto_now_add=True, blank=True, verbose_name='Дата обращения')
 
     class Meta:

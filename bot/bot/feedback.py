@@ -14,7 +14,6 @@ from bot.services.feedback_service import (
     strip_marker,
 )
 from app.utils import format_number
-from config import ADMIN_GROUP_ID
 
 
 ADMIN_REPLY_SENT = "✅ Ответ отправлен клиенту."
@@ -344,15 +343,15 @@ async def admin_group_reply(update: Update, context: CustomContext):
     message = update.effective_message
     if not message or not message.reply_to_message:
         return
-    if ADMIN_GROUP_ID and update.effective_chat.id != ADMIN_GROUP_ID:
-        return
 
     raw_text = message.text or message.caption or ""
     if not has_marker(raw_text):
         return
 
+    # the main admin group or a region group — whichever the feedback was
+    # posted to; a reply anywhere else matches no feedback and is ignored
     feedback = await get_feedback_by_admin_message(
-        message.reply_to_message.message_id
+        update.effective_chat.id, message.reply_to_message.message_id
     )
     if not feedback:
         return

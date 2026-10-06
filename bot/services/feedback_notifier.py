@@ -1,9 +1,12 @@
 from telegram.constants import ParseMode
 
-from config import ADMIN_GROUP_ID
 from bot.models import Feedback
 from bot.resources.strings import Strings
-from bot.services.feedback_service import admin_answered_text, admin_feedback_text
+from bot.services.feedback_service import (
+    admin_answered_text,
+    admin_feedback_text,
+    get_admin_chat_id,
+)
 
 
 def _client_number_line(feedback: Feedback, words: Strings):
@@ -44,7 +47,8 @@ async def _send_with_attachment(bot, chat_id, text, file_id, file_type):
 
 
 async def notify_new_feedback(feedback: Feedback):
-    """Confirm to the client, then post the feedback into the admin group.
+    """Confirm to the client, then post the feedback into the admin group —
+    the region's group for a warehouse feedback, see `get_admin_chat_id`.
     Admins answer by replying to that message with @@@ in the text/caption."""
     from bot.control.updater import application
 
@@ -62,20 +66,22 @@ async def notify_new_feedback(feedback: Feedback):
             parse_mode=ParseMode.HTML,
         )
 
-    if not ADMIN_GROUP_ID:
+    chat_id = await get_admin_chat_id(feedback)
+    if not chat_id:
         return
 
     text = admin_feedback_text(feedback)
     message = await _send_with_attachment(
         bot=application.bot,
-        chat_id=ADMIN_GROUP_ID,
+        chat_id=chat_id,
         text=text,
         file_id=feedback.file_id,
         file_type=feedback.file_type,
     )
 
+    feedback.admin_chat_id = chat_id
     feedback.admin_message_id = message.message_id
-    await feedback.asave(update_fields=["admin_message_id"])
+    await feedback.asave(update_fields=["admin_chat_id", "admin_message_id"])
 
 
 async def send_answer_to_client(feedback: Feedback, bot):
@@ -103,13 +109,13 @@ async def send_answer_to_client(feedback: Feedback, bot):
 
 async def mark_admin_message_answered(feedback: Feedback, bot):
     """Edit the admin-group message so handled feedback is visible at a glance."""
-    if not (ADMIN_GROUP_ID and feedback.admin_message_id):
+    if not (feedback.admin_chat_id and feedback.admin_message_id):
         return
 
     text = admin_answered_text(feedback)
     try:
         await bot.edit_message_text(
-            chat_id=ADMIN_GROUP_ID,
+            chat_id=feedback.admin_chat_id,
             message_id=feedback.admin_message_id,
             text=text,
             parse_mode=ParseMode.HTML,
@@ -118,7 +124,7 @@ async def mark_admin_message_answered(feedback: Feedback, bot):
         # the feedback came with a file, so the group message is a caption
         try:
             await bot.edit_message_caption(
-                chat_id=ADMIN_GROUP_ID,
+                chat_id=feedback.admin_chat_id,
                 message_id=feedback.admin_message_id,
                 caption=text,
                 parse_mode=ParseMode.HTML,

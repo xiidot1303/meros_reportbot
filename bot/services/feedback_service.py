@@ -1,9 +1,11 @@
 import html
 
+from asgiref.sync import sync_to_async
 from django.utils import timezone
 
-from app.models import Order
+from app.models import Order, Warehouse
 from bot.models import Bot_user, Cabinet, Feedback
+from config import ADMIN_GROUP_ID
 
 
 ADMIN_FEEDBACK_TEXT = """\U0001F4DD <b>Новое обращение от клиента</b>
@@ -128,11 +130,32 @@ def has_marker(text):
     return bool(text) and ANSWER_MARKER in text
 
 
-async def get_feedback_by_admin_message(message_id):
+async def get_feedback_by_admin_message(chat_id, message_id):
     """Find the feedback whose admin-group message was replied to."""
     return await Feedback.objects.filter(
-        admin_message_id=message_id
+        admin_chat_id=chat_id, admin_message_id=message_id
     ).select_related("bot_user", "client").afirst()
+
+
+async def get_admin_chat_id(feedback: Feedback):
+    """The group a new feedback is posted to.
+
+    Warehouse feedback goes to the group of the oblast whose warehouse shipped
+    the order (by its ТТН); everything else — and any warehouse feedback whose
+    order, warehouse or region group can't be resolved — goes to ADMIN_GROUP_ID.
+    """
+    if (feedback.feedback_type == Feedback.WAREHOUSE
+            and feedback.ttn_number and feedback.client_id):
+        order = await Order.objects.filter(
+            client_id=feedback.client_id,
+            delivery_number=feedback.ttn_number,
+        ).exclude(warehouse_id__isnull=True).order_by("-id").afirst()
+        if order:
+            group_id = await sync_to_async(Warehouse.feedback_group_id)(
+                order.warehouse_id)
+            if group_id:
+                return group_id
+    return ADMIN_GROUP_ID or None
 
 
 async def save_answer(feedback, answer, admin_user_id=None, admin_name=None,

@@ -43,6 +43,10 @@ class Order(models.Model):
     sales_manager_name = models.CharField(
         null=True, blank=True, max_length=255, verbose_name="Менеджер по продажам")
     total_amount = models.DecimalField(null=True, max_digits=12, decimal_places=0)
+    # SmartUp's `warehouse_ids` — plural in name only, an order ships from one
+    # warehouse. Decides which regional group gets a warehouse feedback.
+    warehouse_id = models.BigIntegerField(
+        null=True, blank=True, db_index=True, verbose_name="ID склада")
 
     # The lifecycle an order walks in SmartUp, in order. Drafts and cancels sit
     # outside it: "D" precedes the flow and "C" can happen from anywhere, so
@@ -302,3 +306,77 @@ class PriceListFile(models.Model):
                 "telegram_file_id": None,
             },
         )
+
+
+class Region(models.Model):
+    """A SmartUp region (`MD_REGIONS`) within Uzbekistan, synced from Oracle.
+
+    Two levels are kept: the oblasts (parent = Uzbekistan) and their districts.
+    Only an oblast carries a Telegram group — warehouse feedback from anywhere
+    in the oblast, district included, is routed to it.
+    """
+
+    UZBEKISTAN_ID = 10000
+
+    region_id = models.BigIntegerField(unique=True, verbose_name="ID региона")
+    name = models.CharField(max_length=255, verbose_name="Название")
+    parent_id = models.BigIntegerField(db_index=True, verbose_name="ID родителя")
+    parent_name = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Родитель")
+    telegram_group_id = models.BigIntegerField(
+        null=True, blank=True, verbose_name="ID Telegram-группы",
+        help_text="Сюда приходят обращения по складу из этой области.")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлено")
+
+    class Meta:
+        verbose_name = "Регион"
+        verbose_name_plural = "Регионы"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def is_oblast(self):
+        return self.parent_id == self.UZBEKISTAN_ID
+
+    def get_oblast(self):
+        """The oblast this region belongs to — itself if it already is one."""
+        if self.is_oblast:
+            return self
+        return Region.objects.filter(
+            region_id=self.parent_id, parent_id=self.UZBEKISTAN_ID).first()
+
+
+class Warehouse(models.Model):
+    """A SmartUp warehouse (`MKW_WAREHOUSES`) with its region, synced from Oracle."""
+
+    warehouse_id = models.BigIntegerField(unique=True, verbose_name="ID склада")
+    name = models.CharField(max_length=255, verbose_name="Название")
+    # Oracle's region id is kept as-is: the warehouse may sit in a region we
+    # don't mirror (outside Uzbekistan's two levels), and then has no group.
+    region_id = models.BigIntegerField(
+        null=True, blank=True, db_index=True, verbose_name="ID региона")
+    region_name = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Регион")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлено")
+
+    class Meta:
+        verbose_name = "Склад"
+        verbose_name_plural = "Склады"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def feedback_group_id(cls, warehouse_id):
+        """The Telegram group of this warehouse's oblast, or None if not set up."""
+        if not warehouse_id:
+            return None
+        warehouse = cls.objects.filter(warehouse_id=warehouse_id).first()
+        if not (warehouse and warehouse.region_id):
+            return None
+        region = Region.objects.filter(region_id=warehouse.region_id).first()
+        oblast = region.get_oblast() if region else None
+        return oblast.telegram_group_id if oblast else None

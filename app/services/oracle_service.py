@@ -50,6 +50,46 @@ class OracleClient:
         }
         return self.execute_query(query, binds)
 
+    def get_regions(self, country_id):
+        """Regions one or two levels under `country_id`: oblasts and their districts."""
+        return self.execute_query(REGIONS_QUERY, {"country_id": country_id})
+
+    def get_warehouses(self):
+        """Every warehouse with the region it is registered in."""
+        return self.execute_query(WAREHOUSES_QUERY)
+
+
+# A region row carries its parent's name; for an oblast the parent is the
+# country itself, for a district it is the oblast.
+REGIONS_QUERY = """
+SELECT R."REGION_ID",
+       R."NAME",
+       R."PARENT_ID",
+       P."NAME"      AS "PARENT_NAME"
+  FROM "SMARTUP5X_ERP"."MD_REGIONS" R
+  JOIN "SMARTUP5X_ERP"."MD_REGIONS" P
+    ON P."COMPANY_ID" = R."COMPANY_ID"
+   AND P."REGION_ID"  = R."PARENT_ID"
+ WHERE R."PARENT_ID" = :country_id
+    OR P."PARENT_ID" = :country_id
+"""
+
+# Both tables have a NAME column, so each is aliased — `execute_query` keys
+# rows by column name and the second would otherwise overwrite the first.
+WAREHOUSES_QUERY = """
+SELECT W."WAREHOUSE_ID",
+       W."NAME"      AS "WAREHOUSE_NAME",
+       R."REGION_ID",
+       R."NAME"      AS "REGION_NAME"
+  FROM "SMARTUP5X_ERP"."MKW_WAREHOUSE_INFOS" WI
+  JOIN "SMARTUP5X_ERP"."MKW_WAREHOUSES" W
+    ON W."COMPANY_ID"   = WI."COMPANY_ID"
+   AND W."WAREHOUSE_ID" = WI."WAREHOUSE_ID"
+  JOIN "SMARTUP5X_ERP"."MD_REGIONS" R
+    ON R."COMPANY_ID" = WI."COMPANY_ID"
+   AND R."REGION_ID"  = WI."REGION_ID"
+"""
+
 # Prices are per branch; 28939 is the branch this cabinet reports on.
 PRICE_LIST_FILIAL_ID = 28939
 

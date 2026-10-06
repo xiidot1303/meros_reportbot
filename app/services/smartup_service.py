@@ -133,6 +133,7 @@ class SmartUpApiClient:
                         "status",
                         "delivery_number",
                         "sales_manager_name",
+                        "warehouse_ids",
                     ],
                     "filter": [
                         "and",

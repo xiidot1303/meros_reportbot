@@ -90,7 +90,7 @@ class FeedbackAdmin(admin.ModelAdmin):
     search_fields = ('ttn_number', 'text', 'answer', 'client__name')
     list_filter = ('feedback_type', 'date', 'answered_at')
     readonly_fields = ('date', 'answered_at', 'answered_by', 'answered_by_name',
-                       'answer_file_id', 'answer_file_type', 'admin_message_id')
+                       'answer_file_id', 'answer_file_type', 'admin_message_id', 'admin_chat_id')
 
 
 @admin.register(ClientStaff)
